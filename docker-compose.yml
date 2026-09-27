@@ -97,6 +97,9 @@ services:
       pgpool: { condition: service_healthy }
       redis: { condition: service_started }
     environment:
+      # A imagem do backend vem com NODE_ENV=production; sem isto o backend de dev roda em modo produção,
+      # recusa as senhas de desenvolvimento e fica reiniciando em loop.
+      NODE_ENV: development
       PORT: 3000
       DB_HOST: pgpool
       DB_PORT: 5432
