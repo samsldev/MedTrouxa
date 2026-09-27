@@ -111,6 +111,13 @@ function cascata(seletor, t0, travessia = 56) {
 const spans = (texto, cls) => palavras(texto).map(({ w, em }) => `<span class="w ${cls}" style="opacity:0">${em ? `<em>${w}</em>` : w}</span>`).join(' ');
 
 // ------------------------------------------------------------------ telas do app (recriadas em HTML)
+/** Custo diário real de cada plano (backend/src/billing/plans.ts): à vista ÷ dias de acesso. */
+const PLANOS_DIA = [
+  ['Aprendiz', 'R$ 599,90 por 1 ano · 12x R$ 59,90', 599.90 / 365],
+  ['Alquimista', 'R$ 799,90 por 1 ano · 12x R$ 79,90', 799.90 / 365],
+  ['Arcano', 'R$ 1.899,90 por 6 anos · 12x R$ 189,90', 1899.90 / (365 * 6)],
+];
+
 const MOCK_CSS = `
 .app { position: relative; align-self: stretch; border-radius: 34px; background: ${COR.bg2}; border: 2px solid ${COR.borda};
   box-shadow: 0 40px 90px -30px rgba(0,0,0,0.75), 0 0 0 1px rgba(212,176,108,0.08); padding: 40px 42px; display: flex; flex-direction: column; gap: 22px; }
@@ -146,6 +153,12 @@ const MOCK_CSS = `
 .timer { display: flex; align-items: center; gap: 12px; color: ${COR.ouroTexto}; font-weight: 800; font-size: 40px; font-variant-numeric: tabular-nums; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .btn-app { text-align: center; padding: 22px; border-radius: 18px; background: linear-gradient(135deg, #f1dca4, #d2ad63 30%, #a57e3c 55%, #e6c982 80%, #b8904f); color: #1a1406; font-weight: 800; font-size: 32px; }
+.plano { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 22px 26px; border-radius: 20px; border: 2px solid ${COR.borda}; background: ${COR.bg}; }
+.plano b { display: block; font-family: "Cormorant Garamond", serif; font-size: 44px; color: ${COR.tinta}; line-height: 1; }
+.plano small { display: block; margin-top: 8px; font-size: 24px; color: ${COR.muted}; font-weight: 500; }
+.plano .dia-v { font-weight: 800; font-size: 44px; color: ${COR.ouroTexto}; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plano .dia-v i { font-style: normal; font-size: 24px; color: ${COR.muted}; font-weight: 600; }
+.plano.top { border-color: ${COR.ouro}; background: rgba(212,176,108,0.08); }
 `;
 
 function mock(tipo, s) {
@@ -185,6 +198,11 @@ function mock(tipo, s) {
         <div class="enun">Lactente com febre alta por 3 dias que cessa, seguida de exantema. Diagnóstico?</div>
         ${[['A', 'Sarampo'], ['B', 'Exantema súbito'], ['C', 'Rubéola']].map(([k, t], i) => `<div class="alt" id="${s}-alt${i}"><b id="${s}-altb${i}">${k}</b><span>${t}</span></div>`).join('')}
         <div class="btn-app">Finalizar (<span id="${s}-n">6</span>/10)</div>
+      </div>`;
+    case 'precos':
+      return `<div class="app" id="${s}-app"><div class="app-glow" id="${s}-appglow"></div>
+        <div class="row"><span class="t" style="font-size:46px">Quanto custa por dia</span><span class="pill ok">7 dias de garantia</span></div>
+        ${PLANOS_DIA.map(([n, sub, v], i) => `<div class="plano${i === 2 ? ' top' : ''}" id="${s}-pl${i}"><span><b>${n}</b><small>${sub}</small></span><span class="dia-v">R$ <span id="${s}-v${i}">${v.toFixed(2).replace('.', ',')}</span><i>/dia</i></span></div>`).join('')}
       </div>`;
     default:
       throw new Error(`mock desconhecido: ${tipo}`);
@@ -232,6 +250,14 @@ function mockJs(tipo, s, t0) {
       tl.fromTo("#${s}-fill", { scaleX: 0.6 }, { scaleX: 0.7, duration: 0.5, ease: "power2.out" }, ${t0} + 1.6);
       tl.to("#${s}-alt1", { borderColor: "${COR.ouro}", backgroundColor: "rgba(212,176,108,0.12)", duration: 0.2 }, ${t0} + 1.2);
       tl.to("#${s}-altb1", { backgroundColor: "${COR.ouro}", borderColor: "${COR.ouro}", color: "#1a1406", duration: 0.2 }, ${t0} + 1.2);`;
+    case 'precos':
+      return `const PD = ${JSON.stringify(PLANOS_DIA.map((p) => p[2]))};
+      for (let i = 0; i < 3; i++) {
+        tl.fromTo("#${s}-pl" + i, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, ${t0} + 0.25 + i * 0.12);
+        (function (i) { const el = document.getElementById("${s}-v" + i), st = { v: 0 };
+          tl.fromTo(st, { v: 0 }, { v: PD[i], duration: 0.9, ease: "power2.out", onUpdate: function () { el.textContent = st.v.toFixed(2).replace(".", ","); } }, ${t0} + 0.35 + i * 0.12); })(i);
+      }
+      tl.fromTo("#${s}-pl2", { scale: 1 }, { scale: 1.04, duration: 0.3, ease: "power3.out" }, ${t0} + 1.7);`;
     default:
       return '';
   }
@@ -327,18 +353,18 @@ export function cenaDor(sid, fmt, ad) {
       tl.fromTo("#${sid}-leg", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 2.1);
       tl.fromTo("#${sid}-curve2", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, 2.7);`;
   } else {
-    const numerado = d.tipo === 'sinais';
+    const numerado = d.tipo === 'sinais', ganho = d.tipo === 'ganhos';
     corpo = `<div class="stage">
         <div class="t d-tit">${spans(d.titulo, `${sid}-tw`)}</div>
         <div class="d-list">${d.itens.map((it, i) => `<div class="d-it" id="${sid}-it${i}">
-          ${numerado ? `<span class="d-num">${i + 1}</span>` : `<span class="d-x">${icone('x', 36, COR.ko, 3)}</span>`}
-          <span class="d-txt">${esc(it)}${numerado ? '' : `<span class="d-strike" id="${sid}-st${i}"></span>`}</span></div>`).join('')}</div>
+          ${numerado ? `<span class="d-num">${i + 1}</span>` : ganho ? `<span class="d-x" style="background:rgba(95,211,154,0.16);border-color:rgba(95,211,154,0.6)">${icone('check', 36, COR.ok, 3)}</span>` : `<span class="d-x">${icone('x', 36, COR.ko, 3)}</span>`}
+          <span class="d-txt">${esc(it)}${numerado || ganho ? '' : `<span class="d-strike" id="${sid}-st${i}"></span>`}</span></div>`).join('')}</div>
         ${fecho ? `<div class="d-fecho" id="${sid}-fecho">${fecho}</div>` : ''}
       </div>`;
     js = `${cascata(`.${sid}-tw`, 0.08)}
       for (let i = 0; i < ${d.itens.length}; i++) {
         tl.fromTo("#${sid}-it" + i, { opacity: 0, x: 70 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, 0.6 + i * 0.42);
-        ${numerado ? '' : `tl.fromTo("#${sid}-st" + i, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, 0.9 + i * 0.42);
+        ${numerado || ganho ? '' : `tl.fromTo("#${sid}-st" + i, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, 0.9 + i * 0.42);
         tl.to("#${sid}-it" + i + " .d-txt", { color: "${COR.muted}", duration: 0.3 }, 0.95 + i * 0.42);`}
       }
       ${fecho ? `tl.fromTo("#${sid}-fecho", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.25);
@@ -490,6 +516,7 @@ function mockEstatico(tipo, s) {
     chat: [],
     flashcard: [],
     simulado: [],
+    precos: [],
   }[tipo];
   let out = html
     .replace(/style="opacity:0"/g, '')

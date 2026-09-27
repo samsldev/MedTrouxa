@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1350" />
+    <!-- GSAP embutido (sem rede no render: regra de determinismo do HyperFrames) -->
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1350px; overflow: hidden; background: #090a17; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #090a17; }
+      [data-composition-id="main"] > div[data-composition-src] { position: absolute; inset: 0; }
+    </style>
+  </head>
+  <body>
+    <!-- Carrossel: cada lâmina ocupa 1 s da linha do tempo; as imagens são capturadas no meio de cada segundo. -->
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5" data-width="1080" data-height="1350">
+      <div id="slot-lamina1" data-composition-id="lamina1" data-composition-src="compositions/lamina1.html"
+        data-start="0" data-duration="1" data-track-index="0" data-width="1080" data-height="1350"></div>
+      <div id="slot-lamina2" data-composition-id="lamina2" data-composition-src="compositions/lamina2.html"
+        data-start="1" data-duration="1" data-track-index="1" data-width="1080" data-height="1350"></div>
+      <div id="slot-lamina3" data-composition-id="lamina3" data-composition-src="compositions/lamina3.html"
+        data-start="2" data-duration="1" data-track-index="0" data-width="1080" data-height="1350"></div>
+      <div id="slot-lamina4" data-composition-id="lamina4" data-composition-src="compositions/lamina4.html"
+        data-start="3" data-duration="1" data-track-index="1" data-width="1080" data-height="1350"></div>
+      <div id="slot-lamina5" data-composition-id="lamina5" data-composition-src="compositions/lamina5.html"
+        data-start="4" data-duration="1" data-track-index="0" data-width="1080" data-height="1350"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

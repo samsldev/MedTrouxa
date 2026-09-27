@@ -1,5 +1,5 @@
 /**
- * Roteiros dos 9 criativos (Meta Ads). Todo claim é verdadeiro sobre o produto:
+ * Roteiros dos 12 criativos (Meta Ads). Todo claim é verdadeiro sobre o produto:
  * preços reais dos planos, 20 questões grátis/dia no plano gratuito, 7 dias de garantia (CDC),
  * planos anuais sem renovação automática, recursos que existem no app.
  * NÃO usar números de alunos/aprovados fictícios — anúncio com dado falso viola as políticas do Meta.
@@ -88,6 +88,30 @@ export const REELS = [
       rodape: `Planos a partir de ${PRECOS.aprendiz} · 7 dias de garantia`,
     },
   },
+  {
+    slug: 'criativo_4',
+    tema: 'Pricing: estudar bem não precisa custar uma fortuna',
+    trilha: 2,
+    ghost: 'R$',
+    gancho: { kicker: 'Fala sério', linhas: ['Estudar pra residência…', '…não precisa custar', '*uma fortuna.*'] },
+    dor: {
+      titulo: 'Seu bolso *já sangra:*',
+      itens: ['Mensalidade da faculdade', 'Cursinho de milhares de reais', 'Uma plataforma pra cada coisa'],
+      fecho: 'Estudar bem *não pode ser luxo.*',
+    },
+    virada: {
+      kicker: 'Faça as contas',
+      titulo: 'Tudo num lugar só, *a partir de R$ 0,87/dia.*',
+      mock: 'precos',
+      chips: ['Questões + flashcards + simulados', 'Coruja IA inclusa', 'Sem renovação automática'],
+    },
+    oferta: {
+      titulo: 'Menos que *um cafezinho.*',
+      linha: 'Teste grátis antes: 20 questões comentadas por dia.',
+      cta: 'Ver planos',
+      rodape: `Aprendiz em ${PRECOS.aprendiz} · 7 dias de garantia`,
+    },
+  },
 ];
 
 // ---------------------------------------------------------------- STORIES (9:16, formato de enquete/quiz)
@@ -166,6 +190,31 @@ export const STORIES = [
       rodape: `Planos a partir de ${PRECOS.aprendiz} · 7 dias de garantia`,
     },
   },
+  {
+    slug: 'criativo_4',
+    tema: 'Pricing: quiz de quanto custa por dia',
+    trilha: 2,
+    ghost: 'R$',
+    gancho: { tipo: 'quiz', kicker: 'Chuta aí', pergunta: 'Quanto custa estudar com o MedTrouxa por dia?', opcoes: ['R$ 15', 'R$ 8', 'R$ 5', 'Menos de R$ 2'], escolhida: 3 },
+    dor: {
+      tipo: 'ganhos',
+      titulo: 'E ainda vem *tudo isso:*',
+      itens: ['Questões comentadas', 'Flashcards + simulados', 'Coruja IA 24h'],
+      fecho: 'Por *menos que um cafezinho.*',
+    },
+    virada: {
+      kicker: 'Faça as contas',
+      titulo: 'Seu bolso *agradece.*',
+      mock: 'precos',
+      chips: ['Parcela em 12x', 'Sem renovação automática'],
+    },
+    oferta: {
+      titulo: 'Comece *grátis.*',
+      linha: 'Gostou? Assine com 7 dias de garantia.',
+      cta: 'Toque no link',
+      rodape: `Aprendiz em ${PRECOS.aprendiz}`,
+    },
+  },
 ];
 
 // ---------------------------------------------------------------- CARROSSEL (feed 4:5, 5 lâminas cada)
@@ -204,6 +253,18 @@ export const CARROSSEIS = [
       { tipo: 'explica', kicker: 'Conheça a Coruja', titulo: 'Sua tutora de medicina *com IA.*', texto: 'Pergunte com suas palavras: ela explica a conduta, cada alternativa e as pegadinhas de prova.', mock: 'chat' },
       { tipo: 'recursos', titulo: 'Coruja + tudo que *você precisa.*', itens: [['owl', 'Coruja IA', 'explica cada alternativa'], ['questions', 'Questões comentadas', 'com filtros'], ['cards', 'Flashcards', 'gerados a partir dos seus resumos'], ['calendar', 'Cronogramas', 'para ENAMED e Residência']] },
       { tipo: 'cta', titulo: 'Sua próxima dúvida, *resolvida.*', linha: 'Questões comentadas + Coruja IA no mesmo lugar.', cta: 'Conhecer o MedTrouxa', rodape: `Planos a partir de ${PRECOS.aprendiz} · 7 dias de garantia` },
+    ],
+  },
+  {
+    slug: 'criativo_4',
+    tema: 'Pricing: faça as contas',
+    ghost: 'R$',
+    laminas: [
+      { tipo: 'capa', kicker: 'Faça as contas', titulo: 'Estudar medicina *não precisa custar uma fortuna.*', sub: 'Arraste e veja quanto custa por dia.' },
+      { tipo: 'lista', titulo: 'O que pesa *no seu bolso*', itens: ['Cursinho de milhares de reais', 'Uma plataforma pra cada coisa', 'Material que você nem usa'], x: true },
+      { tipo: 'explica', kicker: 'A conta', titulo: 'A partir de *R$ 0,87 por dia.*', texto: 'Valor à vista dividido pelos dias de acesso. Parcela em até 12x no cartão.', mock: 'precos' },
+      { tipo: 'recursos', titulo: 'Tudo incluso, *sem pagar à parte.*', itens: [['questions', 'Questões comentadas', 'filtros por área, tema e banca'], ['cards', 'Flashcards', 'repetição espaçada automática'], ['owl', 'Coruja IA', 'tira dúvidas 24h'], ['timer', 'Simulados', 'cronometrados, com gabarito']] },
+      { tipo: 'cta', titulo: 'Teste *grátis* antes de pagar.', linha: '20 questões comentadas por dia, sem cartão.', cta: 'Ver planos', rodape: `Aprendiz em ${PRECOS.aprendiz} · 7 dias de garantia` },
     ],
   },
 ];

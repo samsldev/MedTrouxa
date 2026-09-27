@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Gera os 9 projetos HyperFrames de marketing/metaads a partir dos roteiros + biblioteca de cenas.
- *   reels/criativo_{1,2,3}     vídeo 1080×1920, 15 s, com trilha
- *   stories/criativo_{1,2,3}   vídeo 1080×1920, 15 s, com trilha (áreas seguras de Stories)
- *   carrosel/criativo_{1,2,3}  5 lâminas 1080×1350 (renderizadas como PNG via snapshot)
+ * Gera os 12 projetos HyperFrames de marketing/metaads a partir dos roteiros + biblioteca de cenas.
+ *   reels/criativo_{1,2,3,4}     vídeo 1080×1920, 15 s, com trilha
+ *   stories/criativo_{1,2,3,4}   vídeo 1080×1920, 15 s, com trilha (áreas seguras de Stories)
+ *   carrosel/criativo_{1,2,3,4}  5 lâminas 1080×1350 (renderizadas como PNG via snapshot)
  *
  * Uso:  node marketing/metaads/_fonte/gerar.mjs         (da raiz do repositório)
  * Projetos novos são criados com `npx hyperframes init` (estrutura oficial); os arquivos de composição são reescritos.
