@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { brl, Plan } from '../billing';
+import { spotlight } from '../hooks';
 import { Icon } from './Brand';
 
 export function usePlans() {
@@ -22,7 +23,7 @@ export default function Pricing({ currentPlanId, ctaHref }: { currentPlanId?: st
         const reference = multi ? yearly.cashPrice * p.accessYears : 0;
         const current = currentPlanId === p.id;
         return (
-          <article key={p.id} className={`price-card ${featured ? 'featured' : ''} ${p.id}`}>
+          <article key={p.id} className={`price-card ${featured ? 'featured' : ''} ${p.id}`} onMouseMove={spotlight}>
             <header>
               <div className="price-name">
                 <h3>{p.name}</h3>
@@ -53,7 +54,7 @@ export default function Pricing({ currentPlanId, ctaHref }: { currentPlanId?: st
             {current ? (
               <span className="btn btn-block btn-ghost is-static"><Icon name="check" size={16} /> Seu plano atual</span>
             ) : (
-              <Link to={ctaHref(p.id)} className={`btn btn-block ${featured ? 'btn-gold' : 'btn-outline'}`}>
+              <Link to={ctaHref(p.id)} className={`btn btn-block ${featured ? 'btn-foil' : 'btn-outline'}`}>
                 Quero o {p.name}
               </Link>
             )}

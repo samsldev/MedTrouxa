@@ -54,10 +54,10 @@ export function Icon({ name, size = 18, ...rest }: { name: keyof typeof PATHS | 
 export function Stars({ className = '' }: { className?: string }) {
   const pts = [[8, 18], [22, 42], [37, 12], [51, 30], [64, 8], [78, 36], [91, 16], [15, 70], [44, 60], [70, 72], [86, 58], [30, 88], [58, 90], [95, 84]];
   return (
-    <svg className={`stars ${className}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <polyline points="8,18 22,42 37,12 51,30 64,8" fill="none" stroke="var(--gold)" strokeWidth=".12" opacity=".35" />
-      <polyline points="70,72 86,58 95,84" fill="none" stroke="var(--gold)" strokeWidth=".12" opacity=".35" />
-      {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i % 3 ? 0.35 : 0.55} fill="var(--gold)" opacity={i % 2 ? 0.5 : 0.8} />)}
+    <svg className={`stars ${className}`} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <polyline points="8,18 22,42 37,12 51,30 64,8" fill="none" stroke="var(--gold)" strokeWidth=".08" opacity=".16" />
+      <polyline points="70,72 86,58 95,84" fill="none" stroke="var(--gold)" strokeWidth=".08" opacity=".16" />
+      {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i % 3 ? 0.18 : 0.3} fill="var(--gold)" opacity={i % 2 ? 0.5 : 0.8} />)}
     </svg>
   );
 }
