@@ -861,3 +861,51 @@ button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
 .legal section { margin-top: 2rem; }
 .legal h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: .4rem; }
 .legal p { line-height: 1.75; color: var(--text); }
+
+/* ============================================================
+   Verificação de e-mail e 2FA
+   ============================================================ */
+.otp { display: flex; gap: .5rem; justify-content: center; margin: .4rem 0; }
+.otp input { width: 3rem; height: 3.6rem; text-align: center; font-family: var(--serif); font-size: 1.9rem; font-weight: 600; padding: 0; border-radius: 12px;
+  border: 1px solid var(--border-strong); background: var(--surface); font-variant-numeric: tabular-nums; caret-color: var(--gold); }
+.otp input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+.otp input.gap-after { margin-right: .6rem; }
+.verify-step { display: flex; flex-direction: column; align-items: stretch; gap: 1rem; text-align: center; }
+.verify-step h1 { margin: .2rem 0 0; }
+.verify-step > p { margin: -.4rem 0 .4rem; }
+.verify-icon { align-self: center; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--foil); color: #1a1406; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5); }
+.verify-links { display: flex; flex-direction: column; align-items: center; gap: .1rem; }
+.recovery-input { text-align: center; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 1.3rem; letter-spacing: .15em; }
+.tfa-head { display: flex; gap: 1rem; align-items: flex-start; }
+.tfa-head h3 { margin: 0 0 .2rem; }
+.tfa-head p { margin: 0; }
+.tfa-badge { width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+.tfa-badge.on { background: var(--foil); color: #1a1406; border: 0; }
+.tfa-options { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.tfa-option { display: flex; gap: .9rem; align-items: flex-start; text-align: left; padding: 1rem 1.1rem; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); transition: border-color .15s, transform .15s; }
+.tfa-option:hover { border-color: var(--gold); transform: translateY(-1px); }
+.tfa-option svg { color: var(--gold-text); margin-top: .15rem; flex-shrink: 0; }
+.tfa-option span { display: flex; flex-direction: column; gap: .2rem; }
+.tfa-option small { color: var(--muted); line-height: 1.4; }
+.rec { font-style: normal; font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold-text); background: var(--gold-soft); padding: .1rem .4rem; border-radius: 5px; margin-left: .3rem; vertical-align: middle; }
+.tfa-setup { display: flex; flex-direction: column; gap: 1rem; }
+.tfa-steps { margin: 0; padding-left: 1.2rem; color: var(--muted); display: grid; gap: .25rem; }
+.qr-wrap { display: flex; gap: 1.4rem; align-items: center; padding: 1rem; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--border); flex-wrap: wrap; }
+.qr-wrap img { border-radius: 12px; background: #fff; padding: 8px; border: 1px solid var(--border); }
+.qr-wrap > div { display: flex; flex-direction: column; gap: .3rem; align-items: flex-start; }
+.secret { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 1rem; letter-spacing: .08em; background: var(--surface); border: 1px dashed var(--border-strong); padding: .5rem .7rem; border-radius: 8px; word-break: break-all; }
+.codes { display: grid; grid-template-columns: repeat(2, 1fr); gap: .4rem .8rem; padding: 1rem 1rem 1rem 2.4rem; margin: 0; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.codes code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 1.05rem; letter-spacing: .06em; }
+.btn.left { align-self: flex-start; padding-left: 0; }
+@media (max-width: 760px) {
+  .tfa-options { grid-template-columns: 1fr; }
+  .otp input { width: 2.6rem; height: 3.2rem; font-size: 1.6rem; }
+  .otp { gap: .35rem; }
+}
+.notice > svg { flex-shrink: 0; }
+@media (max-width: 760px) {
+  .auth-art { padding: 1.1rem 1.25rem; gap: .8rem; }
+  .auth-art blockquote { font-size: 1.45rem; }
+  .auth-main { padding-top: 1.5rem; align-items: start; }
+  .verify-step h1 { font-size: 2rem; }
+}

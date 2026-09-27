@@ -18,6 +18,7 @@ export function validateEnv() {
     strong('JWT_SECRET', 32);
     strong('DB_PASSWORD', 16);
     req('APP_URL');
+    if (Buffer.from(process.env.ENCRYPTION_KEY ?? '', 'base64').length !== 32) errors.push('ENCRYPTION_KEY deve ter 32 bytes em base64 (openssl rand -base64 32)');
     req('REDIS_URL');
     if (!/^rediss?:\/\/[^@]*:[^@]+@/.test(process.env.REDIS_URL ?? '')) errors.push('REDIS_URL deve conter senha (redis://:SENHA@host:6379)');
     if (process.env.DB_SYNC === 'true') errors.push('DB_SYNC=true é proibido em produção (use migrations)');

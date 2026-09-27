@@ -16,6 +16,15 @@ export class User {
   @Column({ type: 'int', default: 0 }) xp: number;
   /** Incrementado para revogar todas as sessões (troca de senha, reuso de refresh token, logout geral) */
   @Column({ type: 'int', default: 0, select: false }) tokenVersion: number;
+  /** E-mail confirmado por código de 6 dígitos */
+  @Column({ type: 'timestamptz', nullable: true }) emailVerifiedAt?: Date | null;
+  /** Verificação em duas etapas: 'totp' (app autenticador) ou 'email' */
+  @Column({ type: 'varchar', nullable: true }) twoFactorMethod?: 'totp' | 'email' | null;
+  @Column({ type: 'timestamptz', nullable: true }) twoFactorEnabledAt?: Date | null;
+  /** Segredo TOTP criptografado (AES-256-GCM) */
+  @Column({ type: 'text', nullable: true, select: false }) totpSecretEnc?: string | null;
+  /** Hashes SHA-256 dos códigos de recuperação ainda não usados */
+  @Column({ type: 'jsonb', nullable: true, select: false }) recoveryCodes?: string[] | null;
   /** Aceite dos Termos de uso e Política de privacidade (LGPD art. 8º) */
   @Column({ type: 'timestamptz', nullable: true }) termsAcceptedAt?: Date | null;
   @Column({ nullable: true }) termsVersion?: string;

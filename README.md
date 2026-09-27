@@ -86,7 +86,8 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 - **Pagamentos**: Mercado Pago Checkout Pro (Pix à vista ou cartão em até 12x). Configure o webhook no painel do
   Mercado Pago para `https://SEU_DOMINIO/api/billing/webhook/mercadopago` (evento *Pagamentos*) e copie a
   *assinatura secreta* para `MP_WEBHOOK_SECRET`. O acesso só é liberado após o webhook confirmar o pagamento.
-- **E-mail**: `SMTP_URL` é usado para recuperação de senha.
+- **E-mail**: `SMTP_URL` envia os códigos de confirmação de cadastro, os códigos de 2FA, alertas de segurança e a recuperação de senha.
+- **2FA**: defina `ENCRYPTION_KEY` (`openssl rand -base64 32`) e guarde-a com os backups — sem ela, o 2FA por app deixa de funcionar.
 - **Banco**: o schema é criado e atualizado por migrations (`backend/src/database/migrations`) automaticamente no boot.
   Para mudanças no modelo: `cd backend && npm run migration:generate`.
 - **Admin**: defina `ADMIN_EMAIL`/`ADMIN_PASSWORD` no primeiro deploy; o painel fica em `/admin`.
@@ -114,6 +115,7 @@ docker compose up -d --build
 - Frontend: http://localhost:5173
 - API: http://localhost:3000/api (health em `/api/health`, mostra qual nó respondeu)
 - Admin de desenvolvimento: `admin@medtrouxa.dev` / `Coruja#Dev2026` (em produção, use `ADMIN_EMAIL`/`ADMIN_PASSWORD`)
+- Em dev, os e-mails (códigos de 6 dígitos) aparecem no log do backend
 - Pagamentos simulados em dev (`PAYMENT_PROVIDER=fake`) — o checkout aprova na hora
 
 No primeiro boot o backend cria as tabelas (`DB_SYNC=true`) e popula áreas, temas, questões,

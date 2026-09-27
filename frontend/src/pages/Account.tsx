@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, session } from '../api/client';
 import { useAuth } from '../auth';
 import { Icon } from '../components/Brand';
+import TwoFactorPanel from '../components/TwoFactorPanel';
 
 export default function Account() {
   const { user, setUser, logout } = useAuth();
@@ -52,6 +53,7 @@ export default function Account() {
   return (
     <>
       <div className="page-head"><span className="kicker">Conta</span><h1>Minha <em>conta</em></h1><p className="muted">{user?.email}</p></div>
+      <TwoFactorPanel />
       <div className="grid2">
         <form className="card stack" onSubmit={saveProfile}>
           <h3>Dados pessoais</h3>

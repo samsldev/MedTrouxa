@@ -152,6 +152,6 @@ export async function ensureAdmin(app: INestApplicationContext) {
   if (problem) { log.error(`ADMIN_PASSWORD fraca: ${problem}`); if (isProd()) process.exit(1); return; }
   const existing = await repo.findOneBy({ email });
   if (existing) { if (existing.role !== 'admin') await repo.update(existing.id, { role: 'admin' }); return; }
-  await repo.save(repo.create({ name: 'Admin', email, role: 'admin', passwordHash: await hashPassword(password), termsAcceptedAt: new Date(), termsVersion: 'admin' }));
+  await repo.save(repo.create({ name: 'Admin', email, role: 'admin', passwordHash: await hashPassword(password), termsAcceptedAt: new Date(), termsVersion: 'admin', emailVerifiedAt: new Date() }));
   log.log(`Admin criado: ${email}${isProd() ? '' : ` / ${password} (apenas desenvolvimento)`}`);
 }

@@ -1,6 +1,7 @@
 import { BadRequestException, Body, Controller, Delete, Get, Header, HttpCode, Module, Patch, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
-import { IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
+import * as QRCode from 'qrcode';
 import type { Request, Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
 import { AuthModule, AuthService } from '../auth/auth.module';
@@ -9,7 +10,12 @@ import { User } from '../database/entities';
 import { RedisService } from '../redis/redis.module';
 import { securityEvent } from '../security/logging';
 import { hashPassword, passwordProblem, verifyPassword } from '../security/password';
+import { decrypt, encrypt, sha256 } from '../security/crypto';
+import { MailService } from '../security/mail';
+import { generateRecoveryCodes, OtpService } from '../security/otp';
 import { RateLimit } from '../security/rate-limit';
+import { generateTotpSecret, otpauthUrl, verifyTotp } from '../security/totp';
+import { MfaMethod, TwoFactorService } from '../security/twofactor';
 
 class ProfileDto {
   @IsOptional() @IsString() @Length(2, 120) name?: string;
@@ -17,6 +23,14 @@ class ProfileDto {
   @IsOptional() @IsInt() @Min(1) @Max(12) semester?: number;
 }
 class PasswordDto { @IsString() @MaxLength(128) currentPassword: string; @IsString() @MaxLength(128) newPassword: string }
+class CodeDto { @IsString() @Length(6, 12) code: string }
+class EmailEnableDto extends CodeDto { @IsString() @Length(20, 100) challenge: string }
+class ConfirmDto {
+  @IsString() @MaxLength(128) password: string;
+  @IsIn(['totp', 'email', 'recovery']) method: MfaMethod;
+  @IsString() @Length(6, 12) code: string;
+  @IsOptional() @IsString() @Length(20, 100) challenge?: string;
+}
 class DeleteDto { @IsString() @MaxLength(128) password: string }
 
 /** Direitos do titular (LGPD art. 18): acesso, correção, portabilidade e eliminação. */
@@ -27,7 +41,122 @@ class AccountController {
     @InjectDataSource() private db: DataSource,
     private auth: AuthService,
     private redis: RedisService,
+    private otp: OtpService,
+    private twoFactor: TwoFactorService,
+    private mail: MailService,
   ) {}
+
+  // ---------------- Verificação em duas etapas ----------------
+
+  private notify(u: JwtUser, subject: string, body: string) {
+    return this.mail.send(u.email, `${subject} — MedTrouxa`, `Olá, ${u.name}.\n\n${body}\n\nSe não foi você, troque sua senha imediatamente e fale com o suporte.`).catch(() => undefined);
+  }
+
+  private async newRecoveryCodes(uid: string) {
+    const codes = generateRecoveryCodes();
+    await this.users.update(uid, { recoveryCodes: codes.map((c) => sha256(c)) });
+    return codes;
+  }
+
+  private async confirmSecondFactor(u: JwtUser, dto: ConfirmDto) {
+    await this.checkPassword(u.sub, dto.password);
+    if (dto.method === 'email') {
+      if (!dto.challenge) throw new BadRequestException('Peça o código por e-mail primeiro');
+      await this.otp.get(dto.challenge, 'confirm_2fa');
+    }
+    const ok = await this.twoFactor.verify(u.sub, dto.method, dto.code, dto.challenge);
+    if (!ok) {
+      if (dto.challenge) await this.otp.fail(dto.challenge);
+      throw new BadRequestException('Código inválido');
+    }
+    if (dto.challenge) await this.otp.consume(dto.challenge);
+  }
+
+  @Get('security')
+  async security(@CurrentUser() u: JwtUser) {
+    const user = await this.users.findOneByOrFail({ id: u.sub });
+    return {
+      emailVerified: !!user.emailVerifiedAt,
+      twoFactorMethod: user.twoFactorMethod ?? null,
+      twoFactorEnabledAt: user.twoFactorEnabledAt ?? null,
+      recoveryCodesLeft: await this.twoFactor.recoveryLeft(u.sub),
+    };
+  }
+
+  /** Gera um segredo TOTP pendente (10 min) e devolve o QR Code para o app autenticador. */
+  @Post('2fa/totp/setup') @RateLimit({ limit: 10, windowSec: 600, key: 'user' })
+  async totpSetup(@CurrentUser() u: JwtUser) {
+    const user = await this.users.findOneByOrFail({ id: u.sub });
+    if (user.twoFactorMethod) throw new BadRequestException('Desative a verificação atual antes de trocar de método');
+    const secret = generateTotpSecret();
+    await this.redis.client.set(`totp-setup:${u.sub}`, encrypt(secret), 'EX', 600);
+    const url = otpauthUrl(secret, user.email);
+    const qr = await QRCode.toDataURL(url, { errorCorrectionLevel: 'M', margin: 1, width: 240, color: { dark: '#0e1030', light: '#ffffff' } });
+    return { qr, secret: secret.match(/.{1,4}/g)!.join(' '), otpauth: url };
+  }
+
+  @Post('2fa/totp/enable') @RateLimit({ limit: 10, windowSec: 600, key: 'user' })
+  async totpEnable(@CurrentUser() u: JwtUser, @Body() dto: CodeDto) {
+    const enc = await this.redis.client.get(`totp-setup:${u.sub}`);
+    if (!enc) throw new BadRequestException('A configuração expirou. Gere um novo QR Code.');
+    const secret = decrypt(enc);
+    if (verifyTotp(secret, dto.code.replace(/\s/g, '')) === null) throw new BadRequestException('Código inválido. Confira o horário do seu celular.');
+    await this.users.update(u.sub, { twoFactorMethod: 'totp', totpSecretEnc: enc, twoFactorEnabledAt: new Date() });
+    await this.redis.client.del(`totp-setup:${u.sub}`);
+    const recoveryCodes = await this.newRecoveryCodes(u.sub);
+    securityEvent('account.2fa_enabled', { user: u.sub, method: 'totp' });
+    await this.notify(u, 'Verificação em duas etapas ativada', 'A verificação em duas etapas por aplicativo autenticador foi ativada na sua conta.');
+    return { recoveryCodes };
+  }
+
+  @Post('2fa/email/setup') @RateLimit({ limit: 5, windowSec: 600, key: 'user' })
+  async emailSetup(@CurrentUser() u: JwtUser) {
+    const user = await this.users.findOneByOrFail({ id: u.sub });
+    if (user.twoFactorMethod) throw new BadRequestException('Desative a verificação atual antes de trocar de método');
+    const challenge = await this.otp.create(u.sub, 'setup_email_2fa');
+    await this.otp.sendCode(challenge, user, { cooldown: false });
+    return { challenge };
+  }
+
+  @Post('2fa/email/enable') @RateLimit({ limit: 10, windowSec: 600, key: 'user' })
+  async emailEnable(@CurrentUser() u: JwtUser, @Body() dto: EmailEnableDto) {
+    const ch = await this.otp.get(dto.challenge, 'setup_email_2fa');
+    if (ch.uid !== u.sub) throw new BadRequestException();
+    if (!(await this.otp.checkEmailCode(dto.challenge, dto.code))) await this.otp.fail(dto.challenge);
+    await this.otp.consume(dto.challenge);
+    await this.users.update(u.sub, { twoFactorMethod: 'email', totpSecretEnc: null, twoFactorEnabledAt: new Date() });
+    const recoveryCodes = await this.newRecoveryCodes(u.sub);
+    securityEvent('account.2fa_enabled', { user: u.sub, method: 'email' });
+    await this.notify(u, 'Verificação em duas etapas ativada', 'A verificação em duas etapas por e-mail foi ativada na sua conta.');
+    return { recoveryCodes };
+  }
+
+  /** Para 2FA por e-mail: envia um código para confirmar alterações sensíveis (desativar, novos códigos). */
+  @Post('2fa/confirm-code') @RateLimit({ limit: 5, windowSec: 600, key: 'user' })
+  async confirmCode(@CurrentUser() u: JwtUser) {
+    const user = await this.users.findOneByOrFail({ id: u.sub });
+    if (user.twoFactorMethod !== 'email') throw new BadRequestException('Use seu app autenticador ou um código de recuperação');
+    const challenge = await this.otp.create(u.sub, 'confirm_2fa');
+    await this.otp.sendCode(challenge, user, { cooldown: false });
+    return { challenge };
+  }
+
+  @Post('2fa/disable') @HttpCode(204) @RateLimit({ limit: 5, windowSec: 900, key: 'user' })
+  async disable(@CurrentUser() u: JwtUser, @Body() dto: ConfirmDto) {
+    await this.confirmSecondFactor(u, dto);
+    await this.users.update(u.sub, { twoFactorMethod: null, totpSecretEnc: null, recoveryCodes: null, twoFactorEnabledAt: null });
+    securityEvent('account.2fa_disabled', { user: u.sub });
+    await this.notify(u, 'Verificação em duas etapas desativada', 'A verificação em duas etapas foi desativada na sua conta.');
+  }
+
+  @Post('2fa/recovery-codes') @RateLimit({ limit: 5, windowSec: 900, key: 'user' })
+  async regenerate(@CurrentUser() u: JwtUser, @Body() dto: ConfirmDto) {
+    await this.confirmSecondFactor(u, dto);
+    const recoveryCodes = await this.newRecoveryCodes(u.sub);
+    securityEvent('account.recovery_codes_regenerated', { user: u.sub });
+    await this.notify(u, 'Novos códigos de recuperação', 'Novos códigos de recuperação foram gerados. Os anteriores deixaram de funcionar.');
+    return { recoveryCodes };
+  }
 
   private async checkPassword(userId: string, password: string) {
     const u = await this.users.findOne({ where: { id: userId }, select: ['id', 'passwordHash'] });

@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
-import { Equals, IsBoolean, IsEmail, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
+import { Equals, IsBoolean, IsEmail, IsIn, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
 import { createHash, randomBytes } from 'crypto';
 import type { CookieOptions, Request, Response } from 'express';
 import { Repository } from 'typeorm';
@@ -15,7 +15,9 @@ import { RedisService } from '../redis/redis.module';
 import { maskEmail, securityEvent } from '../security/logging';
 import { MailService } from '../security/mail';
 import { hashPassword, passwordProblem, verifyPassword } from '../security/password';
+import { OtpService } from '../security/otp';
 import { RateLimit } from '../security/rate-limit';
+import { MfaMethod, TwoFactorService } from '../security/twofactor';
 
 export const TERMS_VERSION = '2026-09';
 const ACCESS_TTL = '15m';
@@ -34,6 +36,9 @@ class RegisterDto {
 }
 class LoginDto { @IsEmail() @MaxLength(254) email: string; @IsString() @MaxLength(128) password: string }
 class ForgotDto { @IsEmail() @MaxLength(254) email: string }
+class ChallengeDto { @IsString() @Length(20, 100) challenge: string }
+class VerifyCodeDto extends ChallengeDto { @IsString() @Length(6, 12) code: string }
+class MfaDto extends VerifyCodeDto { @IsIn(['totp', 'email', 'recovery']) method: MfaMethod }
 class ResetDto { @IsString() @Length(20, 200) token: string; @IsString() @MaxLength(128) password: string }
 
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
@@ -45,6 +50,8 @@ export class AuthService {
     private jwt: JwtService,
     private redis: RedisService,
     private mail: MailService,
+    private otp: OtpService,
+    private twoFactor: TwoFactorService,
   ) {}
 
   cookieOptions(): CookieOptions {
@@ -60,7 +67,7 @@ export class AuthService {
     await this.redis.client.set(`rt:${sha256(rt)}`, JSON.stringify({ uid: user.id, tv }), 'EX', REFRESH_TTL_SEC);
     res.cookie(RT_COOKIE, rt, this.cookieOptions());
     const { passwordHash: _p, tokenVersion: _t, ...safe } = user as User & { tokenVersion?: number };
-    return { accessToken: this.jwt.sign(payload, { expiresIn: ACCESS_TTL, algorithm: 'HS256' }), user: safe };
+    return { status: 'ok' as const, accessToken: this.jwt.sign(payload, { expiresIn: ACCESS_TTL, algorithm: 'HS256' }), user: safe };
   }
 
   /** Revoga todas as sessões do usuário (troca de senha, reuso de token, exclusão de conta). */
@@ -81,7 +88,64 @@ export class AuthService {
       passwordHash: await hashPassword(dto.password), termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION,
     }));
     securityEvent('auth.register', { user: user.id });
+    return this.startEmailVerification(user);
+  }
+
+  /** Cria o desafio de confirmação de e-mail e envia o código de 6 dígitos. */
+  private async startEmailVerification(user: User) {
+    const challenge = await this.otp.create(user.id, 'verify_email');
+    await this.otp.sendCode(challenge, user, { cooldown: false });
+    return { status: 'verify_email' as const, challenge, email: maskEmail(user.email) };
+  }
+
+  /** Após a senha: exige confirmação de e-mail e/ou segundo fator antes de emitir a sessão. */
+  private async afterPassword(user: User, res: Response) {
+    if (!user.emailVerifiedAt) return this.startEmailVerification(user);
+    if (user.twoFactorMethod) {
+      const challenge = await this.otp.create(user.id, 'mfa');
+      if (user.twoFactorMethod === 'email') await this.otp.sendCode(challenge, user, { cooldown: false });
+      return { status: 'mfa' as const, challenge, method: user.twoFactorMethod, email: maskEmail(user.email) };
+    }
     return this.issue(user, res);
+  }
+
+  async verifyEmail(dto: VerifyCodeDto, res: Response) {
+    const ch = await this.otp.get(dto.challenge, 'verify_email');
+    if (!(await this.otp.checkEmailCode(dto.challenge, dto.code))) await this.otp.fail(dto.challenge);
+    await this.otp.consume(dto.challenge);
+    await this.users.update(ch.uid, { emailVerifiedAt: new Date() });
+    const user = await this.users.findOneByOrFail({ id: ch.uid });
+    securityEvent('auth.email_verified', { user: user.id });
+    return this.afterPassword(user, res); // se tiver 2FA, ainda pede o segundo fator
+  }
+
+  async mfa(dto: MfaDto, ip: string, res: Response) {
+    const ch = await this.otp.get(dto.challenge, 'mfa');
+    const ok = await this.twoFactor.verify(ch.uid, dto.method, dto.code, dto.challenge);
+    if (!ok) {
+      securityEvent('auth.mfa_failed', { user: ch.uid, method: dto.method, ip });
+      await this.otp.fail(dto.challenge);
+    }
+    await this.otp.consume(dto.challenge);
+    const user = await this.users.findOneByOrFail({ id: ch.uid });
+    securityEvent('auth.login', { user: user.id, ip, mfa: dto.method });
+    if (dto.method === 'recovery') {
+      const left = await this.twoFactor.recoveryLeft(user.id);
+      await this.mail.send(user.email, 'Código de recuperação usado — MedTrouxa',
+        `Olá, ${user.name}.
+
+Um código de recuperação foi usado para entrar na sua conta. Restam ${left}.
+Se não foi você, troque sua senha imediatamente.`).catch(() => undefined);
+    }
+    return this.issue(user, res);
+  }
+
+  async resend(dto: ChallengeDto) {
+    const ch = await this.otp.get(dto.challenge, ['verify_email', 'mfa']);
+    const user = await this.users.findOneByOrFail({ id: ch.uid });
+    if (ch.purpose === 'mfa' && user.twoFactorMethod !== 'email') throw new BadRequestException('Use seu app autenticador ou um código de recuperação');
+    await this.otp.sendCode(dto.challenge, user);
+    return { sent: true };
   }
 
   async login(dto: LoginDto, ip: string, res: Response) {
@@ -94,7 +158,7 @@ export class AuthService {
     }
     const user = await this.users.findOne({
       where: { email },
-      select: ['id', 'name', 'email', 'role', 'university', 'semester', 'xp', 'createdAt', 'passwordHash'],
+      select: ['id', 'name', 'email', 'role', 'university', 'semester', 'xp', 'createdAt', 'passwordHash', 'emailVerifiedAt', 'twoFactorMethod'],
     });
     const ok = await verifyPassword(dto.password, user?.passwordHash);
     if (!user || !ok) {
@@ -103,8 +167,8 @@ export class AuthService {
       throw new UnauthorizedException('E-mail ou senha inválidos');
     }
     await this.redis.client.del(lockKey).catch(() => undefined);
-    securityEvent('auth.login', { user: user.id, ip });
-    return this.issue(user, res);
+    if (!user.twoFactorMethod && user.emailVerifiedAt) securityEvent('auth.login', { user: user.id, ip });
+    return this.afterPassword(user, res);
   }
 
   async refresh(req: Request, res: Response) {
@@ -149,7 +213,7 @@ export class AuthService {
     const user = await this.users.findOneByOrFail({ id: uid });
     const problem = passwordProblem(dto.password, user.email);
     if (problem) throw new BadRequestException(problem);
-    await this.users.update(uid, { passwordHash: await hashPassword(dto.password) });
+    await this.users.update(uid, { passwordHash: await hashPassword(dto.password), emailVerifiedAt: user.emailVerifiedAt ?? new Date() });
     await this.revokeAll(uid);
     securityEvent('auth.password_reset', { user: uid });
   }
@@ -172,6 +236,15 @@ class AuthController {
 
   @Public() @Post('login') @HttpCode(200) @RateLimit({ limit: 10, windowSec: 300 })
   login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) { return this.auth.login(dto, req.ip ?? '', res); }
+
+  @Public() @Post('verify-email') @HttpCode(200) @RateLimit({ limit: 15, windowSec: 600 })
+  verifyEmail(@Body() dto: VerifyCodeDto, @Res({ passthrough: true }) res: Response) { return this.auth.verifyEmail(dto, res); }
+
+  @Public() @Post('mfa') @HttpCode(200) @RateLimit({ limit: 15, windowSec: 600 })
+  mfa(@Body() dto: MfaDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) { return this.auth.mfa(dto, req.ip ?? '', res); }
+
+  @Public() @Post('resend-code') @HttpCode(200) @RateLimit({ limit: 6, windowSec: 600 })
+  resend(@Body() dto: ChallengeDto) { return this.auth.resend(dto); }
 
   @Public() @Post('refresh') @HttpCode(200) @RateLimit({ limit: 30, windowSec: 60 })
   refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) { assertSameOrigin(req); return this.auth.refresh(req, res); }
@@ -199,7 +272,7 @@ class AuthController {
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
   controllers: [AuthController],
-  providers: [AuthService, MailService],
-  exports: [AuthService],
+  providers: [AuthService, MailService, OtpService, TwoFactorService],
+  exports: [AuthService, OtpService, TwoFactorService, MailService],
 })
 export class AuthModule {}

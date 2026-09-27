@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../auth';
+import { AuthStep, useAuth } from '../auth';
+import VerifyStep from '../components/VerifyStep';
 import { Icon, Logo, Stars } from '../components/Brand';
 
 export default function Login() {
@@ -10,6 +11,8 @@ export default function Login() {
   const [mode, setMode] = useState<'login' | 'register'>(params.get('mode') === 'register' ? 'register' : 'login');
   const [form, setForm] = useState({ name: '', email: '', password: '', university: '', semester: '' });
   const [accept, setAccept] = useState(false);
+  const [step, setStep] = useState<Exclude<AuthStep, { status: 'ok' }> | null>(null);
+  const onStep = (s: AuthStep) => setStep(s.status === 'ok' ? null : s);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   if (user) return <Navigate to={next.startsWith('/') ? next : '/inicio'} replace />;
@@ -20,12 +23,12 @@ export default function Login() {
     e.preventDefault();
     setError(''); setBusy(true);
     try {
-      if (mode === 'login') await login(form.email, form.password);
-      else await register({
+      if (mode === 'login') onStep(await login(form.email, form.password));
+      else onStep(await register({
         name: form.name, email: form.email, password: form.password,
         university: form.university || undefined, semester: form.semester ? Number(form.semester) : undefined,
         acceptTerms: accept,
-      });
+      }));
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
 
@@ -44,9 +47,13 @@ export default function Login() {
         </ul>
       </aside>
       <main className="auth-main">
+        {step ? (
+          <div className="auth-card"><VerifyStep key={step.challenge} step={step} onStep={onStep} onCancel={() => setStep(null)} /></div>
+        ) : (
         <form className="auth-card" onSubmit={submit}>
           <h1>{mode === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}</h1>
           <p className="muted">{mode === 'login' ? 'Continue de onde parou.' : 'Leva menos de um minuto.'}</p>
+          {params.get('reset') && <div className="notice">Senha redefinida. Entre com a nova senha.</div>}
           {mode === 'register' && <label>Nome<input autoComplete="name" value={form.name} onChange={set('name')} required /></label>}
           <label>E-mail<input type="email" autoComplete="email" value={form.email} onChange={set('email')} required /></label>
           <label>
@@ -72,6 +79,7 @@ export default function Login() {
             {mode === 'login' ? 'Ainda não tem conta? Cadastre-se' : 'Já tem conta? Entrar'}
           </button>
         </form>
+        )}
       </main>
     </div>
   );
