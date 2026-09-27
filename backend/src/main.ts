@@ -9,10 +9,12 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { seedDemoContent } from './database/demo';
+import { databasePreflight } from './database/preflight';
 import { seedIfEmpty } from './database/seed';
 import { RedisService } from './redis/redis.module';
 
 async function bootstrap() {
+  await databasePreflight(); // banco acessível e compatível com as migrations, antes de subir a API
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: isProd() ? ['error', 'warn', 'log'] : undefined,
   });

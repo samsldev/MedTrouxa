@@ -34,6 +34,9 @@ x-pg-env: &pg-env
   REPMGR_RECONNECT_ATTEMPTS: "3"
   REPMGR_RECONNECT_INTERVAL: "5"
 
+# Nome fixo: volumes de produção nunca se misturam com os de desenvolvimento (docker-compose.yml)
+name: medtrouxa-prod
+
 services:
   pg-0:
     <<: *pg-common

@@ -29,6 +29,15 @@ function Assert-Env {
   if (-not (Test-Path .env.production)) { throw 'Falta .env.production. Rode primeiro: .\scripts\prod.ps1 secrets' }
   $vazios = Get-Content .env.production | Where-Object { $_ -match '^(DOMAIN|DB_PASSWORD|JWT_SECRET|ENCRYPTION_KEY|BACKUP_PASSPHRASE|MP_ACCESS_TOKEN|MP_PUBLIC_KEY|MP_WEBHOOK_SECRET|ADMIN_EMAIL)=\s*$' }
   if ($vazios) { throw "Preencha no .env.production: $($vazios -join ', ')" }
+  # Mesmas regras do backend: com segredo fraco ele se recusa a iniciar e o contêiner ficaria reiniciando em loop
+  $fracos = 'medtrouxa', 'adminpass', 'repmgrpass', 'pgpooladmin', 'troque-este-segredo', 'devredis', 'changeme', 'password', 'secret'
+  $vars = @{}; Get-Content .env.production | Where-Object { $_ -match '^([A-Z_]+)=(.*)$' } | ForEach-Object { $vars[$Matches[1]] = $Matches[2].Trim() }
+  $ruins = foreach ($k in 'DB_PASSWORD', 'PG_ADMIN_PASSWORD', 'REPMGR_PASSWORD', 'PGPOOL_ADMIN_PASSWORD', 'REDIS_PASSWORD', 'JWT_SECRET', 'BACKUP_PASSPHRASE') {
+    $v = $vars[$k]; $min = if ($k -eq 'JWT_SECRET') { 32 } else { 16 }
+    if (-not $v -or $v.Length -lt $min -or $fracos -contains $v) { "$k (mínimo $min caracteres, sem valor padrão)" }
+  }
+  if ($ruins) { throw "Segredos fracos no .env.production: $($ruins -join '; '). Gere novos com: .\scripts\prod.ps1 secrets (num arquivo novo)" }
+  try { if ([Convert]::FromBase64String($vars['ENCRYPTION_KEY']).Length -ne 32) { throw } } catch { throw 'ENCRYPTION_KEY deve ter 32 bytes em base64.' }
 }
 function Assert-Docker {
   docker info *> $null
@@ -71,7 +80,11 @@ switch ($Acao) {
     Invoke-Compose ps
     $domain = (Get-Content .env.production | Where-Object { $_ -match '^DOMAIN=' }) -replace '^DOMAIN=', ''
     try { $h = Invoke-RestMethod "https://$domain/api/health" -TimeoutSec 10; Write-Host "API: $($h.status) | banco: $($h.db.node) | redis: $($h.redis)" -ForegroundColor Green }
-    catch { Write-Warning "https://$domain/api/health não respondeu: $($_.Exception.Message)" }
+    catch {
+      Write-Warning "https://$domain/api/health não respondeu: $($_.Exception.Message)"
+      Write-Host "`nÚltimas linhas do backend (o motivo costuma estar aqui):" -ForegroundColor Yellow
+      & docker @Compose logs --tail 40 backend
+    }
   }
   'logs' { Invoke-Compose logs -f --tail 200 backend }
   'backup' {

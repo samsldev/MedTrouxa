@@ -212,6 +212,22 @@ docker compose -f docker-compose.prod.yml --env-file .env.production logs -f bac
   (`restart: unless-stopped`). Se o Postgres voltar com nós marcados como `down`:
   `docker compose -f docker-compose.prod.yml --env-file .env.production restart pgpool`.
 
+### Problemas comuns
+
+**Backend fica reiniciando e o site não mostra planos/prova social (fica "esperando a API").**
+O backend não sobe e o site fica sem dados. Veja o motivo com
+`.\scripts\prod.ps1 status` (mostra o log sozinho) ou `docker compose -f docker-compose.prod.yml --env-file .env.production logs --tail 50 backend`:
+
+| Mensagem no log | Causa | Solução |
+|---|---|---|
+| `[env] Configuração insegura/incompleta` | Produção subiu com senhas/segredos fracos ou faltando — por exemplo usando `--env-file .env` (o `.env` é o de **desenvolvimento**) | Use sempre `--env-file .env.production` (ou `.\scripts\prod.ps1 up`, que valida antes). Gere segredos com `.\scripts\prod.ps1 secrets` |
+| `Este banco foi criado pelo antigo modo de sincronização` | Banco criado por uma versão antiga do compose de dev (sem histórico de migrations) | Dev: `.\scripts\dev.ps1 reset`. Produção: use um banco novo ou restaure um backup |
+| `Aguardando o banco (n/30)` | Postgres/Pgpool ainda subindo ou nós marcados como `down` | Espere; se passar de 1–2 min: `docker compose -f docker-compose.prod.yml --env-file .env.production restart pgpool` |
+
+Dev e produção usam **projetos separados** (`medtrouxa-dev` e `medtrouxa-prod`), com volumes próprios: subir um nunca
+reaproveita o banco do outro. Se você rodou versões antigas, sobraram volumes do projeto `medtrouxa`; depois de conferir
+que não precisa deles, remova com `docker compose -p medtrouxa down -v`.
+
 ### Desenvolvimento
 
 ```powershell
@@ -239,7 +255,7 @@ docker compose up -d --build
 - Em dev, os e-mails (códigos de 6 dígitos) aparecem no log do backend
 - Pagamentos simulados em dev (`PAYMENT_PROVIDER=fake`) — o checkout aprova na hora
 
-No primeiro boot o backend cria as tabelas (`DB_SYNC=true`) e popula áreas, temas, questões,
+No primeiro boot o backend cria as tabelas pelas migrations (igual à produção) e popula áreas, temas, questões,
 baralhos e cronogramas de exemplo.
 
 ### Desenvolvimento local

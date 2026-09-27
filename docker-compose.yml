@@ -29,6 +29,9 @@ x-pg-env: &pg-env
   REPMGR_RECONNECT_ATTEMPTS: "3"
   REPMGR_RECONNECT_INTERVAL: "5"
 
+# Nome fixo: volumes de desenvolvimento separados dos de produção (docker-compose.prod.yml usa medtrouxa-prod)
+name: medtrouxa-dev
+
 services:
   pg-0:
     <<: *pg-common
@@ -100,7 +103,6 @@ services:
       DB_USER: ${DB_USER:-medtrouxa}
       DB_PASSWORD: ${DB_PASSWORD:-medtrouxa}
       DB_NAME: ${DB_NAME:-medtrouxa}
-      DB_SYNC: "true"
       # Depoimentos de EXEMPLO na landing (só fora de produção). Em produção: NODE_ENV=production
       DEMO_CONTENT: ${DEMO_CONTENT:-true}
       REDIS_URL: redis://:${REDIS_PASSWORD:-devredis}@redis:6379
