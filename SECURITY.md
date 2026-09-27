@@ -41,6 +41,12 @@ Para reportar uma vulnerabilidade, escreva para o contato de suporte da platafor
 - Cupons: código restrito a `[A-Z0-9_-]`, validade, planos e limite de usos checados no servidor; criação exige reautenticação e fica na auditoria.
 - CSP libera apenas os domínios do Mercado Pago necessários (SDK, iframes e antifraude).
 
+## Apps nativos (Android/iOS)
+
+- Refresh token rotativo no Keychain/Keystore (`AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`, fora de backup), access token só em memória.
+- Modo app (`x-client: mobile`, token no corpo) só é aceito sem `Origin` em produção: navegadores não conseguem usá-lo para escapar do cookie httpOnly.
+- Sem compras no app; exclusão de conta disponível no próprio app (exigência da App Store).
+
 ## Console administrativo
 
 - Rotas `/api/admin/*` respondem **404** para quem não é admin (não revelam que existem) e exigem sessão com 2FA por app em produção (`ADMIN_REQUIRE_TOTP`).

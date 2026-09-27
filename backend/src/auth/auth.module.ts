@@ -23,6 +23,18 @@ export const TERMS_VERSION = '2026-09';
 const ACCESS_TTL = '15m';
 const REFRESH_TTL_SEC = 30 * 24 * 3600;
 const RT_COOKIE = 'mt_rt';
+/** Apps nativos: sessão deslizante mais longa (o refresh token fica no Keychain/Keystore, não em cookie). */
+const MOBILE_REFRESH_TTL_SEC = 90 * 24 * 3600;
+
+/**
+ * Cliente nativo (app Android/iOS): pede o refresh token no corpo em vez de cookie.
+ * Navegadores sempre mandam Origin em POST cross-site; em produção só aceitamos o modo app sem Origin
+ * (apps nativos não enviam), então uma página web não consegue usar esse modo para escapar do cookie httpOnly.
+ */
+export function isMobileClient(req: Request | undefined): boolean {
+  if (!req || req.headers['x-client'] !== 'mobile') return false;
+  return !req.headers.origin || !isProd();
+}
 const LOCK_MAX_FAILS = 5;
 const LOCK_WINDOW_SEC = 15 * 60;
 
@@ -65,10 +77,14 @@ export class AuthService {
     const tv = full?.tokenVersion ?? 0;
     const payload: JwtUser = { sub: user.id, email: user.email, role: user.role, name: user.name, tv, mfa: full?.twoFactorMethod ?? null };
     const rt = randomBytes(32).toString('base64url');
-    await this.redis.client.set(`rt:${sha256(rt)}`, JSON.stringify({ uid: user.id, tv }), 'EX', REFRESH_TTL_SEC);
-    res.cookie(RT_COOKIE, rt, this.cookieOptions());
+    const mobile = isMobileClient(res.req as Request);
+    await this.redis.client.set(`rt:${sha256(rt)}`, JSON.stringify({ uid: user.id, tv, m: mobile ? 1 : 0 }), 'EX', mobile ? MOBILE_REFRESH_TTL_SEC : REFRESH_TTL_SEC);
+    if (!mobile) res.cookie(RT_COOKIE, rt, this.cookieOptions());
     const { passwordHash: _p, tokenVersion: _t, ...safe } = user as User & { tokenVersion?: number };
-    return { status: 'ok' as const, accessToken: this.jwt.sign(payload, { expiresIn: ACCESS_TTL, algorithm: 'HS256' }), user: safe };
+    return {
+      status: 'ok' as const, accessToken: this.jwt.sign(payload, { expiresIn: ACCESS_TTL, algorithm: 'HS256' }), user: safe,
+      ...(mobile ? { refreshToken: rt } : {}),
+    };
   }
 
   /** Revoga todas as sessões do usuário (troca de senha, reuso de token, exclusão de conta). */
@@ -172,8 +188,13 @@ Se não foi você, troque sua senha imediatamente.`).catch(() => undefined);
     return this.afterPassword(user, res);
   }
 
+  /** Refresh token do pedido: corpo (app nativo) ou cookie httpOnly (web). */
+  private tokenFrom(req: Request): unknown {
+    return isMobileClient(req) ? (req.body as { refreshToken?: unknown } | undefined)?.refreshToken : req.cookies?.[RT_COOKIE];
+  }
+
   async refresh(req: Request, res: Response) {
-    const rt = req.cookies?.[RT_COOKIE];
+    const rt = this.tokenFrom(req);
     if (!rt || typeof rt !== 'string') throw new UnauthorizedException();
     const h = sha256(rt);
     const raw = await this.redis.client.getdel(`rt:${h}`);
@@ -192,7 +213,7 @@ Se não foi você, troque sua senha imediatamente.`).catch(() => undefined);
   }
 
   async logout(req: Request, res: Response) {
-    const rt = req.cookies?.[RT_COOKIE];
+    const rt = this.tokenFrom(req);
     if (typeof rt === 'string') await this.redis.client.del(`rt:${sha256(rt)}`).catch(() => undefined);
     res.clearCookie(RT_COOKIE, { ...this.cookieOptions(), maxAge: undefined });
   }
@@ -222,6 +243,7 @@ Se não foi você, troque sua senha imediatamente.`).catch(() => undefined);
 
 /** Anti-CSRF para rotas que usam cookie: exige Origin/Referer do próprio site (além do SameSite=Strict). */
 function assertSameOrigin(req: Request) {
+  if (isMobileClient(req)) return; // app nativo: token no corpo, sem cookie → não há CSRF
   const origin = req.headers.origin ?? (req.headers.referer ? new URL(req.headers.referer).origin : undefined);
   if (!origin) { if (isProd()) throw new ForbiddenException(); return; }
   const allowed = [appUrl(), ...(isProd() ? [] : ['http://localhost:5173', 'http://127.0.0.1:5173'])];

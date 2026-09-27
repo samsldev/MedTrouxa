@@ -58,6 +58,11 @@ Termos de uso e Política de privacidade estão em `/termos` e `/privacidade`, a
 Cormorant Garamond nos títulos e Inter no texto (fontes embutidas no bundle via `@fontsource`). Ícones de traço
 fino, céu estrelado discreto e modo escuro automático. Tokens em `frontend/src/styles.css`.
 
+## Apps Android e iOS
+
+A pasta [`mobile/`](mobile/README.md) tem o app nativo (React Native + Expo, TypeScript): mesmo conteúdo do site, **sem pagamento**
+(regras da App Store e do Google Play). Leia o README de lá para desenvolvimento, build (EAS) e o checklist de publicação.
+
 ## Arquitetura
 
 ```
