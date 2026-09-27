@@ -1,0 +1,10 @@
+# Tudo roda em contêineres Linux: força LF mesmo em clones no Windows (CRLF quebra Caddyfile, Dockerfiles, .env e scripts sh)
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.pfx binary
+*.p12 binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.ttf binary
+*.woff2 binary

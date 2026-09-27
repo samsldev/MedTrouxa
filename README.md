@@ -155,6 +155,77 @@ A coleta (`POST /api/t`) só acontece nas páginas públicas e **só depois do c
 | Coruja IA | — | 30/h | 90/h |
 | Cronogramas guiados | — | — | ✓ |
 
+## Windows (PowerShell) — VPS e desenvolvimento
+
+Tudo roda em **contêineres Linux**. No Windows use o **Docker Desktop com backend WSL2** (Windows 10/11 ou
+Windows Server 2022/2025 com WSL2 habilitado) e confirme que está em *Linux containers*.
+Os scripts ficam em `scripts\` e validam isso sozinhos.
+
+### Preparar a VPS (uma vez, PowerShell como Administrador)
+
+```powershell
+wsl --install                                   # reinicie o servidor se pedir
+winget install -e --id Docker.DockerDesktop     # depois abra o Docker Desktop e ative "Start when you sign in"
+winget install -e --id Git.Git
+# Libere só HTTP/HTTPS (o banco, o Redis e a API NÃO ficam expostos)
+New-NetFirewallRule -DisplayName "MedTrouxa HTTP"  -Direction Inbound -Protocol TCP -LocalPort 80  -Action Allow
+New-NetFirewallRule -DisplayName "MedTrouxa HTTPS" -Direction Inbound -Protocol TCP -LocalPort 443 -Action Allow
+New-NetFirewallRule -DisplayName "MedTrouxa HTTP3" -Direction Inbound -Protocol UDP -LocalPort 443 -Action Allow
+# Permite rodar os scripts do projeto
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Clone mantendo finais de linha Unix (o `.gitattributes` já garante, mas evite a conversão global):
+
+```powershell
+git config --global core.autocrlf input
+git clone <url-do-repositorio> C:\medtrouxa
+cd C:\medtrouxa
+```
+
+### Produção
+
+```powershell
+.\scripts\prod.ps1 secrets     # 1ª vez: cria .env.production com todas as senhas/chaves fortes geradas
+notepad .env.production        # preencha DOMAIN, ADMIN_EMAIL/ADMIN_PASSWORD, MP_*, SMTP_URL, ANTHROPIC_API_KEY, NFSE_*...
+.\scripts\prod.ps1 up          # build + sobe tudo; migrations automáticas; HTTPS pelo Caddy
+.\scripts\prod.ps1 status      # contêineres + https://DOMAIN/api/health
+.\scripts\prod.ps1 logs        # logs da API
+.\scripts\prod.ps1 update      # git pull + rebuild da API e do site, sem derrubar banco/redis
+.\scripts\prod.ps1 backup      # backup imediato (o diário é automático em .\backups)
+.\scripts\prod.ps1 restore -Arquivo backups\medtrouxa-20260927-0300.sql.gz.enc
+.\scripts\prod.ps1 down        # para tudo (dados preservados nos volumes)
+```
+
+Sem os scripts, o equivalente direto é:
+
+```powershell
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+docker compose -f docker-compose.prod.yml --env-file .env.production ps
+docker compose -f docker-compose.prod.yml --env-file .env.production logs -f backend
+```
+
+- Aponte o DNS de `DOMAIN` para o IP da VPS **antes** do primeiro `up` (o certificado HTTPS é emitido na hora).
+- Guarde uma cópia do `.env.production` fora do servidor: sem `ENCRYPTION_KEY` o 2FA por app para de funcionar e sem
+  `BACKUP_PASSPHRASE` os backups não abrem. Copie também a pasta `backups\` para outro lugar (ex.: agendando um `robocopy`).
+- Após reiniciar a VPS o Docker Desktop sobe sozinho (se configurado para iniciar no login) e os contêineres voltam
+  (`restart: unless-stopped`). Se o Postgres voltar com nós marcados como `down`:
+  `docker compose -f docker-compose.prod.yml --env-file .env.production restart pgpool`.
+
+### Desenvolvimento
+
+```powershell
+.\scripts\dev.ps1 up        # tudo em Docker: site http://localhost:5173, API http://localhost:3000/api
+.\scripts\dev.ps1 local     # banco/redis em Docker; API e site no Windows com hot reload (abre 2 janelas)
+.\scripts\dev.ps1 logs      # logs da API (os códigos de e-mail de 6 dígitos aparecem aqui)
+.\scripts\dev.ps1 test      # testes do backend, typecheck do site, verificação do app mobile
+.\scripts\dev.ps1 mobile    # app Android/iOS com Expo
+.\scripts\dev.ps1 failover  # mostra os nós do Postgres
+.\scripts\dev.ps1 down      # para (mantém dados)   |   .\scripts\dev.ps1 reset  # apaga os dados de dev
+```
+
+Login de desenvolvimento: `admin@medtrouxa.dev` / `Coruja#Dev2026`. Pagamentos simulados (cartão final `0002` recusa).
+
 ## Rodando (desenvolvimento)
 
 ```bash
