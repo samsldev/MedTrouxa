@@ -4,6 +4,7 @@ import { PartialType } from '@nestjs/mapped-types';
 import { IsBoolean, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min } from 'class-validator';
 import { DataSource, Repository } from 'typeorm';
 import { AdminOnly, Public } from '../common/auth';
+import { DEMO_APPROVED_NAMES, DEMO_STATS, demoEnabled } from '../database/demo';
 import { Testimonial } from '../database/entities';
 import { RedisService } from '../redis/redis.module';
 
@@ -33,23 +34,25 @@ class SocialController {
     private redis: RedisService,
   ) {}
 
-  /** Números reais da plataforma, para a prova social da landing */
+  /** Números da plataforma para a prova social (reais; fictícios apenas no modo de teste) */
   @Public() @Get('stats')
   stats() {
     return this.redis.cached('public:stats', 600, async () => {
+      if (demoEnabled()) return { ...DEMO_STATS, approvedNames: DEMO_APPROVED_NAMES };
       const [r] = await this.db.query(`SELECT
         (SELECT count(*) FROM questions)::int AS questions,
         (SELECT count(*) FROM flashcards)::int AS flashcards,
         (SELECT count(*) FROM users WHERE role = 'student')::int AS students,
         (SELECT count(*) FROM answers)::int AS answers`);
-      return r as { questions: number; flashcards: number; students: number; answers: number };
+      const approved = await this.testimonials.find({ where: { approved: true, published: true, isDemo: false }, select: ['name'] });
+      return { ...r, approved: approved.length, approvedNames: approved.map((a) => a.name) };
     });
   }
 
   @Public() @Get('testimonials')
   list() {
     return this.redis.cached('public:testimonials', 600, () => {
-      const where = process.env.NODE_ENV === 'production' ? { published: true, isDemo: false } : { published: true };
+      const where = demoEnabled() ? { published: true } : { published: true, isDemo: false };
       return this.testimonials.find({ where, order: { featured: 'DESC', createdAt: 'DESC' } });
     });
   }

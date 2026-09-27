@@ -120,7 +120,14 @@ export default function Landing() {
         <Stars />
         <div className="grain" aria-hidden="true" />
         <div className="lp-wrap hero-in">
-          <span className="eyebrow"><Icon name="spark" size={13} /> Medicina, com um toque de magia</span>
+          {stats && stats.students >= 1000 ? (
+            <span className="eyebrow">
+              <span className="face-stack" aria-hidden="true">{['LC', 'GR', 'BM'].map((f) => <i key={f}>{f}</i>)}</span>
+              Escolhido por +{Math.floor(stats.students / 1000)} mil estudantes de medicina
+            </span>
+          ) : (
+            <span className="eyebrow"><Icon name="spark" size={13} /> Medicina, com um toque de magia</span>
+          )}
           <h1>Estude medicina como quem <em>domina um feitiço</em>.</h1>
           <p className="lede">Questões comentadas, flashcards com repetição espaçada, simulados e uma tutora com IA. Da faculdade ao ENAMED e à residência, em um só lugar.</p>
           <div className="hero-cta">
@@ -251,7 +258,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <Approvals items={items} />
+      <Approvals stats={stats} />
       <Testimonials items={items} />
 
       <section id="planos" className="lp-section pricing-section">

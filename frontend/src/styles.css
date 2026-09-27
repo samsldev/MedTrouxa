@@ -787,3 +787,30 @@ button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
   .footer-bottom { flex-direction: column; }
   .footer-bottom small { order: 3; }
 }
+
+/* Prova social — ajustes do modo de teste e carrossel de vídeo */
+.big-count-sub { margin: .6rem 0 0; color: var(--muted); font-size: .95rem; }
+.face-stack { display: inline-flex; margin-right: .2rem; }
+.face-stack i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .55rem; font-weight: 700; color: #1a1406; background: var(--foil); border: 1.5px solid #07081a; margin-left: -6px; }
+.face-stack i:first-child { margin-left: 0; }
+.v-head { margin-top: 5rem; }
+.v-title { font-size: clamp(1.9rem, 3.6vw, 2.6rem); font-weight: 500; margin: 1rem 0 2rem; letter-spacing: -.02em; }
+.v-title em { font-style: italic; color: var(--gold-text); font-weight: 500; }
+.v-track { animation-duration: 80s; animation-direction: reverse; }
+.v-track .v-card { width: 300px; flex-shrink: 0; }
+.v-card { transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
+.v-card:hover { transform: translateY(-4px); }
+.v-thumb { box-shadow: var(--shadow); }
+.v-thumb:hover .v-play { transform: translate(-50%, -50%) scale(1.1); }
+.v-play { transition: transform .25s; }
+.v-dur { position: absolute; right: .6rem; bottom: .6rem; font-size: .7rem; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .55); padding: .15rem .45rem; border-radius: 6px; font-variant-numeric: tabular-nums; }
+.v-ph { position: relative; overflow: hidden; }
+.v-ph::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .08) 50%, transparent 70%); background-size: 250% 100%; animation: shimmer 3.5s ease-in-out infinite; }
+@keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+.v-ph .t-avatar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: .35; filter: blur(.3px); }
+.v-ph.hue0 { background: radial-gradient(circle at 30% 30%, #3b3f93, #0e1030); }
+.v-ph.hue1 { background: radial-gradient(circle at 70% 30%, #5a3f7e, #120d2a); }
+.v-ph.hue2 { background: radial-gradient(circle at 40% 70%, #2d4f7a, #0b1427); }
+.v-ph.hue3 { background: radial-gradient(circle at 60% 40%, #6b5328, #1a1308); }
+.v-card h4 { margin-top: 1rem; }
+.v-card p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

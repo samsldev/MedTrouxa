@@ -41,8 +41,10 @@ gateway (Pagar.me, Mercado Pago, Stripe) em `BillingService.checkout`.
   especialidade, instituições, destaque (ex.: "93 pontos no ENAMED"), nota, foto, vídeo, `featured` (cards grandes)
   e `approved` (entra no mural de aprovados). As seções somem sozinhas enquanto não houver registros.
   Só publique depoimentos reais, com autorização de uso de nome e imagem.
-- **Exemplos para desenvolvimento**: com `DEMO_CONTENT=true` (padrão do compose) são criados depoimentos de pessoas
-  fictícias, exibidos com o selo "Exemplo". Com `NODE_ENV=production` eles não são criados nem retornados pela API.
+- **Modo de teste** (`DEMO_CONTENT=true`, padrão do compose): a landing mostra números fictícios (+48 mil questões,
+  +2.700 aprovados, +21 mil estudantes…), nomes de aprovados e depoimentos em texto e vídeo gerados para teste,
+  tudo em `backend/src/database/demo.ts`. **Com `NODE_ENV=production` o modo de teste é desligado
+  automaticamente** e a landing passa a mostrar só números e depoimentos reais cadastrados.
 
 ### Rodapé
 

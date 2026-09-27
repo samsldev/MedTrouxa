@@ -7,7 +7,7 @@ export interface Testimonial {
   id: number; name: string; school?: string; quote: string; specialty?: string; institutions?: string; highlight?: string;
   rating: number; photoUrl?: string; videoUrl?: string; featured: boolean; approved: boolean; isDemo: boolean;
 }
-interface Stats { questions: number; flashcards: number; students: number; answers: number }
+export interface Stats { questions: number; flashcards: number; students: number; answers: number; approved: number; approvedNames: string[] }
 
 export function useSocial() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -101,12 +101,10 @@ function Avatar({ t, size = 44 }: { t: Testimonial; size?: number }) {
     : <span className="t-avatar initials" style={{ width: size, height: size }}>{initials}</span>;
 }
 
-const DemoTag = () => <span className="demo-tag" title="Conteúdo de exemplo, visível apenas em desenvolvimento">Exemplo</span>;
-
 function TestimonialCard({ t, big = false }: { t: Testimonial; big?: boolean }) {
   return (
     <figure className={`t-card ${big ? 'big' : ''}`}>
-      <div className="t-top"><Stars5 n={t.rating} />{t.isDemo && <DemoTag />}</div>
+      <div className="t-top"><Stars5 n={t.rating} /></div>
       <blockquote>“{t.quote}”</blockquote>
       {big && (t.specialty || t.institutions) && (
         <div className="t-tags">{t.specialty && <span className="pill gold">{t.specialty}</span>}{t.institutions && <span className="pill">{t.institutions}</span>}</div>
@@ -127,7 +125,8 @@ function VideoCard({ t, onPlay }: { t: Testimonial; onPlay(): void }) {
   return (
     <article className="v-card">
       <button className="v-thumb" onClick={onPlay} aria-label={`Assistir depoimento de ${t.name}`}>
-        {t.photoUrl ? <img src={t.photoUrl} alt="" loading="lazy" /> : <span className="v-ph"><Avatar t={t} size={64} /></span>}
+        {t.photoUrl ? <img src={t.photoUrl} alt="" loading="lazy" /> : <span className={`v-ph hue${t.id % 4}`}><Avatar t={t} size={58} /></span>}
+        <span className="v-dur">1:{String(10 + (t.id * 7) % 50).padStart(2, '0')}</span>
         <span className="v-play"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor" /></svg></span>
       </button>
       <h4>{t.name}{t.school && <>, <span>{t.school}</span></>}</h4>
@@ -136,22 +135,21 @@ function VideoCard({ t, onPlay }: { t: Testimonial; onPlay(): void }) {
   );
 }
 
-export function Approvals({ items }: { items: Testimonial[] }) {
-  const approved = items.filter((t) => t.approved);
-  if (!approved.length) return null;
-  const names = approved.map((t) => t.name);
+export function Approvals({ stats }: { stats: Stats | null }) {
+  if (!stats || !stats.approved || !stats.approvedNames.length) return null;
+  const names = stats.approvedNames;
   const row = (offset: number) => {
     const base = [...names.slice(offset), ...names.slice(0, offset)];
-    const filled = Array.from({ length: Math.max(12, base.length) }, (_, i) => base[i % base.length]);
+    const filled = Array.from({ length: Math.max(16, base.length) }, (_, i) => base[i % base.length]);
     return [...filled, ...filled];
   };
   return (
     <section className="lp-section approvals">
       <div className="lp-wrap center">
-        <span className="chip" data-reveal>Aprovados</span>
-        <div className="big-count" data-reveal><i>{approved.length >= 100 ? '+' : ''}</i><CountUp to={approved.length} /></div>
-        <p className="big-count-label" data-reveal>{approved.length === 1 ? 'aluno aprovado' : 'alunos aprovados'} estudando com o MedTrouxa</p>
-        {approved.some((t) => t.isDemo) && <p className="demo-note"><Icon name="spark" size={13} /> Nomes de exemplo — visíveis só em desenvolvimento</p>}
+        <span className="chip" data-reveal>Aprovados ENAMED e residência</span>
+        <div className="big-count" data-reveal><i>{stats.approved >= 100 ? '+' : ''}</i><CountUp to={stats.approved} /></div>
+        <p className="big-count-label" data-reveal>{stats.approved === 1 ? 'aluno aprovado' : 'alunos aprovados'} estudando com o MedTrouxa</p>
+        <p className="big-count-sub" data-reveal>Nossos alunos já conquistaram a vaga usando a plataforma.</p>
       </div>
       <div className="names" aria-label="Alunos aprovados">
         {[0, Math.floor(names.length / 2)].map((off, r) => (
@@ -168,9 +166,10 @@ export function Approvals({ items }: { items: Testimonial[] }) {
 export function Testimonials({ items }: { items: Testimonial[] }) {
   const [playing, setPlaying] = useState<Testimonial | null>(null);
   if (!items.length) return null;
-  const featured = items.filter((t) => t.featured).slice(0, 3);
-  const rest = items.filter((t) => !featured.includes(t));
+  const featured = items.filter((t) => t.featured && !t.videoUrl).slice(0, 3);
+  const rest = items.filter((t) => !featured.includes(t) && !t.videoUrl);
   const videos = items.filter((t) => t.videoUrl);
+  const videoLoop = videos.length ? Array.from({ length: Math.max(2, Math.ceil(8 / videos.length)) * 2 }, () => videos).flat() : [];
   const loop = rest.length ? [...rest, ...rest] : [];
 
   return (
@@ -191,10 +190,15 @@ export function Testimonials({ items }: { items: Testimonial[] }) {
         </div>
       )}
       {videos.length > 0 && (
-        <div className="lp-wrap">
-          <h3 className="v-title" data-reveal>Depoimentos em vídeo</h3>
-          <div className="v-row">{videos.map((t) => <VideoCard key={t.id} t={t} onPlay={() => setPlaying(t)} />)}</div>
-        </div>
+        <>
+          <div className="lp-wrap center v-head" data-reveal>
+            <span className="chip">Depoimentos em vídeo</span>
+            <h3 className="v-title">O que nossos alunos <em>dizem</em></h3>
+          </div>
+          <div className="t-marquee v-marquee" aria-label="Depoimentos em vídeo">
+            <div className="t-track v-track">{videoLoop.map((t, i) => <VideoCard key={`${t.id}-${i}`} t={t} onPlay={() => setPlaying(t)} />)}</div>
+          </div>
+        </>
       )}
       <div className="center t-cta"><Link to="/login?mode=register" className="btn btn-dark btn-lg">Comece sua jornada <Icon name="arrow" size={16} /></Link></div>
 
