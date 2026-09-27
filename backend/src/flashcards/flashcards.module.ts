@@ -2,15 +2,15 @@ import {
   Body, Controller, ForbiddenException, Get, Injectable, Module, NotFoundException, Param, ParseIntPipe, Post,
 } from '@nestjs/common';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
 import { Repository } from 'typeorm';
 import { CurrentUser, JwtUser } from '../common/auth';
 import { CardReview, Deck, Flashcard } from '../database/entities';
 import { RedisService } from '../redis/redis.module';
 import { sm2 } from './sm2';
 
-class DeckDto { @IsString() name: string; @IsOptional() @IsString() description?: string; @IsOptional() @IsInt() topicId?: number }
-class CardDto { @IsString() front: string; @IsString() back: string }
+class DeckDto { @IsString() @Length(1, 120) name: string; @IsOptional() @IsString() @MaxLength(1000) description?: string; @IsOptional() @IsInt() topicId?: number }
+class CardDto { @IsString() @Length(1, 2000) front: string; @IsString() @Length(1, 4000) back: string }
 class ReviewDto { @IsInt() @Min(0) @Max(5) grade: number }
 
 @Injectable()
@@ -60,19 +60,27 @@ export class FlashcardsService {
   }
 
   async review(userId: string, cardId: number, grade: number) {
-    if (!(await this.cards.existsBy({ id: cardId }))) throw new NotFoundException();
-    const prev = (await this.reviews.findOneBy({ userId, cardId })) ?? { ease: 2.5, interval: 0, repetitions: 0 };
-    const next = sm2(prev, grade);
+    const card = await this.cards.findOneBy({ id: cardId });
+    if (!card) throw new NotFoundException();
+    await this.deckFor(userId, card.deckId); // controle de acesso: não revisa cards de baralhos privados de terceiros
+    const existing = await this.reviews.findOneBy({ userId, cardId });
+    const wasDue = !existing || existing.dueAt <= new Date();
+    const next = sm2(existing ?? { ease: 2.5, interval: 0, repetitions: 0 }, grade);
     await this.reviews.upsert({ userId, cardId, ...next }, ['userId', 'cardId']);
-    await this.redis.addXp(userId, 2);
+    // XP só para revisões que estavam pendentes (evita farm revisando o mesmo card)
+    if (wasDue) await this.redis.addXp(userId, 2);
     await this.redis.invalidate(`stats:${userId}`);
     return next;
   }
 
-  createDeck(userId: string, dto: DeckDto) { return this.decks.save(this.decks.create({ ...dto, ownerId: userId })); }
+  async createDeck(userId: string, dto: DeckDto) {
+    if ((await this.decks.countBy({ ownerId: userId })) >= 200) throw new ForbiddenException('Limite de 200 baralhos');
+    return this.decks.save(this.decks.create({ ...dto, ownerId: userId }));
+  }
 
   async addCard(userId: string, deckId: number, dto: CardDto) {
     await this.deckFor(userId, deckId, true);
+    if ((await this.cards.countBy({ deckId })) >= 5000) throw new ForbiddenException('Limite de 5.000 cards por baralho');
     return this.cards.save(this.cards.create({ ...dto, deckId }));
   }
 }

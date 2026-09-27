@@ -1,4 +1,4 @@
-# MedTrouxa - stack completa
+# MedTrouxa - DESENVOLVIMENTO (para produção use docker-compose.prod.yml)
 # Postgres HA: 1 primário (pg-0) + 2 réplicas streaming (pg-1, pg-2) gerenciadas pelo repmgr.
 # Se o primário cair, o repmgr promove uma réplica automaticamente; quando o antigo
 # primário volta, ele se reintegra ao cluster como réplica do novo primário.
@@ -83,7 +83,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-devredis}"]
     ports: ["6379:6379"]
     volumes: [redis_data:/data]
 
@@ -103,20 +103,21 @@ services:
       DB_SYNC: "true"
       # Depoimentos de EXEMPLO na landing (só fora de produção). Em produção: NODE_ENV=production
       DEMO_CONTENT: ${DEMO_CONTENT:-true}
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-devredis}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-not-for-production-use-000}
+      APP_URL: http://localhost:5173
+      PAYMENT_PROVIDER: fake
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CORS_ORIGIN: http://localhost:5173
     ports: ["3000:3000"]
 
   frontend:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: http://localhost:3000/api
+        VITE_API_URL: /api
     restart: unless-stopped
     depends_on: [backend]
-    ports: ["5173:80"]
+    ports: ["5173:8080"]
 
 volumes:
   pg0_data:

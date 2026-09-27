@@ -1,4 +1,4 @@
-import { Controller, ForbiddenException, Get, Module, NotFoundException, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Controller, Get, Module, NotFoundException, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CurrentUser, JwtUser } from '../common/auth';
@@ -24,10 +24,7 @@ class StudyPlansController {
   @Post(':id/enroll')
   async enroll(@CurrentUser() u: JwtUser, @Param('id', ParseIntPipe) planId: number) {
     if (!(await this.plans.existsBy({ id: planId }))) throw new NotFoundException();
-    const sub = await this.billing.active(u.sub);
-    if (u.role !== 'admin' && !['alquimista', 'arcano'].includes(sub?.planId ?? '')) {
-      throw new ForbiddenException('Cronogramas guiados fazem parte dos planos Alquimista e Arcano');
-    }
+    await this.billing.require(u, 'studyPlans', 'Cronogramas guiados fazem parte dos planos Alquimista e Arcano');
     const existing = await this.enrollments.findOneBy({ userId: u.sub, planId });
     return existing ?? this.enrollments.save(this.enrollments.create({ userId: u.sub, planId, completed: [] }));
   }
@@ -37,9 +34,15 @@ class StudyPlansController {
     const e = await this.enrollments.findOneBy({ id, userId: u.sub });
     if (!e || idx < 0 || idx >= e.plan.items.length) throw new NotFoundException();
     const done = new Set(e.completed);
+    const rewarded = new Set(e.rewarded ?? []);
     if (done.has(idx)) done.delete(idx);
-    else { done.add(idx); await this.redis.addXp(u.sub, 5); }
+    else {
+      done.add(idx);
+      // XP só na primeira conclusão de cada tarefa
+      if (!rewarded.has(idx)) { rewarded.add(idx); await this.redis.addXp(u.sub, 5); }
+    }
     e.completed = [...done].sort((a, b) => a - b);
+    e.rewarded = [...rewarded];
     return this.enrollments.save(e);
   }
 }

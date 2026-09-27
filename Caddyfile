@@ -1,0 +1,11 @@
+# TLS automático (Let's Encrypt) na frente do frontend/nginx.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy frontend:8080 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+	log {
+		output stdout
+		format json
+	}
+}

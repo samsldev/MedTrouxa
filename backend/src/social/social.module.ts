@@ -16,8 +16,8 @@ class TestimonialDto {
   @IsOptional() @IsString() @MaxLength(160) institutions?: string;
   @IsOptional() @IsString() @MaxLength(120) highlight?: string;
   @IsOptional() @IsInt() @Min(1) @Max(5) rating?: number;
-  @IsOptional() @IsUrl() photoUrl?: string;
-  @IsOptional() @IsUrl() videoUrl?: string;
+  @IsOptional() @IsUrl({ protocols: ['https'], require_protocol: true }) @MaxLength(500) photoUrl?: string;
+  @IsOptional() @IsUrl({ protocols: ['https'], require_protocol: true }) @MaxLength(500) videoUrl?: string;
   @IsOptional() @IsBoolean() featured?: boolean;
   @IsOptional() @IsBoolean() approved?: boolean;
   @IsOptional() @IsBoolean() published?: boolean;
@@ -56,6 +56,9 @@ class SocialController {
       return this.testimonials.find({ where, order: { featured: 'DESC', createdAt: 'DESC' } });
     });
   }
+
+  @AdminOnly() @Get('testimonials/all')
+  all() { return this.testimonials.find({ where: { isDemo: false }, order: { createdAt: 'DESC' } }); }
 
   @AdminOnly() @Post('testimonials')
   async create(@Body() dto: TestimonialDto) {

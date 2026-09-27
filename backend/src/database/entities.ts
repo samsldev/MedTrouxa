@@ -14,6 +14,11 @@ export class User {
   @Column({ nullable: true }) university?: string;
   @Column({ type: 'int', nullable: true }) semester?: number;
   @Column({ type: 'int', default: 0 }) xp: number;
+  /** Incrementado para revogar todas as sessões (troca de senha, reuso de refresh token, logout geral) */
+  @Column({ type: 'int', default: 0, select: false }) tokenVersion: number;
+  /** Aceite dos Termos de uso e Política de privacidade (LGPD art. 8º) */
+  @Column({ type: 'timestamptz', nullable: true }) termsAcceptedAt?: Date | null;
+  @Column({ nullable: true }) termsVersion?: string;
   @CreateDateColumn() createdAt: Date;
 }
 
@@ -131,6 +136,8 @@ export class PlanEnrollment {
   @ManyToOne(() => StudyPlan, { eager: true, onDelete: 'CASCADE' }) plan: StudyPlan;
   @Column() planId: number;
   @Column('jsonb', { default: [] }) completed: number[];
+  /** Tarefas que já renderam XP (evita farm de XP marcando/desmarcando) */
+  @Column('jsonb', { default: [] }) rewarded: number[];
   @CreateDateColumn() startedAt: Date;
 }
 
@@ -145,9 +152,14 @@ export class Subscription {
   @Column({ type: 'int' }) installments: number;
   /** Total cobrado, em centavos */
   @Column({ type: 'int' }) amount: number;
-  @Column({ default: 'active' }) status: 'pending' | 'active' | 'canceled';
-  @CreateDateColumn() startsAt: Date;
-  @Column({ type: 'timestamptz' }) expiresAt: Date;
+  @Column({ default: 'pending' }) status: 'pending' | 'active' | 'canceled' | 'failed';
+  /** Provedor de pagamento e referência externa (ex.: id do pagamento no Mercado Pago) */
+  @Column({ default: 'fake' }) provider: string;
+  @Index({ unique: true, where: '"providerPaymentId" IS NOT NULL' }) @Column({ nullable: true }) providerPaymentId?: string;
+  @CreateDateColumn() createdAt: Date;
+  @Column({ type: 'timestamptz', nullable: true }) paidAt?: Date | null;
+  @Column({ type: 'timestamptz', nullable: true }) startsAt?: Date | null;
+  @Column({ type: 'timestamptz', nullable: true }) expiresAt?: Date | null;
 }
 
 /** Depoimento/aprovação de aluno. Gerenciado pelo admin; `isDemo` marca conteúdo de exemplo (nunca em produção). */

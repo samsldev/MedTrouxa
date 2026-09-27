@@ -1,0 +1,191 @@
+# MedTrouxa — PRODUÇÃO
+#   cp .env.production.example .env.production   # preencha TODOS os segredos
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# Diferenças para o compose de desenvolvimento:
+#  - segredos obrigatórios (${VAR:?}) — nada sobe com senha padrão
+#  - Postgres, Pgpool e Redis NÃO expõem portas; só o Caddy (80/443) fica público
+#  - HTTPS automático (Caddy + Let's Encrypt), API e frontend na mesma origem
+#  - migrations em vez de synchronize; conteúdo de teste desligado
+#  - Redis com senha; containers da aplicação sem root; backup diário criptografado
+
+x-pg-common: &pg-common
+  image: bitnamilegacy/postgresql-repmgr:17
+  restart: unless-stopped
+  tmpfs: [/tmp]
+  networks: [data]
+  healthcheck:
+    test: ["CMD-SHELL", "PGPASSWORD=$$POSTGRESQL_PASSWORD pg_isready -U $$POSTGRESQL_USERNAME -d $$POSTGRESQL_DATABASE -h 127.0.0.1"]
+    interval: 10s
+    timeout: 5s
+    retries: 10
+
+x-pg-env: &pg-env
+  POSTGRESQL_POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:?defina PG_ADMIN_PASSWORD}
+  POSTGRESQL_USERNAME: ${DB_USER:-medtrouxa}
+  POSTGRESQL_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD}
+  POSTGRESQL_DATABASE: ${DB_NAME:-medtrouxa}
+  POSTGRESQL_PASSWORD_ENCRYPTION: scram-sha-256
+  REPMGR_PASSWORD: ${REPMGR_PASSWORD:?defina REPMGR_PASSWORD}
+  REPMGR_PRIMARY_HOST: pg-0
+  REPMGR_PARTNER_NODES: pg-0,pg-1,pg-2
+  REPMGR_FAILOVER: automatic
+  REPMGR_DEGRADED_MONITORING_TIMEOUT: "5"
+  REPMGR_RECONNECT_ATTEMPTS: "3"
+  REPMGR_RECONNECT_INTERVAL: "5"
+
+services:
+  pg-0:
+    <<: *pg-common
+    volumes: [pg0_data:/bitnami/postgresql]
+    environment: { <<: *pg-env, REPMGR_NODE_NAME: pg-0, REPMGR_NODE_NETWORK_NAME: pg-0 }
+  pg-1:
+    <<: *pg-common
+    volumes: [pg1_data:/bitnami/postgresql]
+    environment: { <<: *pg-env, REPMGR_NODE_NAME: pg-1, REPMGR_NODE_NETWORK_NAME: pg-1 }
+  pg-2:
+    <<: *pg-common
+    volumes: [pg2_data:/bitnami/postgresql]
+    environment: { <<: *pg-env, REPMGR_NODE_NAME: pg-2, REPMGR_NODE_NETWORK_NAME: pg-2 }
+
+  pgpool:
+    image: bitnamilegacy/pgpool:4
+    restart: unless-stopped
+    networks: [data]
+    depends_on: [pg-0, pg-1, pg-2]
+    environment:
+      PGPOOL_BACKEND_NODES: 0:pg-0:5432,1:pg-1:5432,2:pg-2:5432
+      PGPOOL_BACKEND_APPLICATION_NAMES: pg-0,pg-1,pg-2
+      PGPOOL_SR_CHECK_USER: repmgr
+      PGPOOL_SR_CHECK_PASSWORD: ${REPMGR_PASSWORD}
+      PGPOOL_SR_CHECK_DATABASE: postgres
+      PGPOOL_ENABLE_LDAP: "no"
+      PGPOOL_POSTGRES_USERNAME: postgres
+      PGPOOL_POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD}
+      PGPOOL_ADMIN_USERNAME: admin
+      PGPOOL_ADMIN_PASSWORD: ${PGPOOL_ADMIN_PASSWORD:?defina PGPOOL_ADMIN_PASSWORD}
+      PGPOOL_POSTGRES_CUSTOM_USERS: ${DB_USER:-medtrouxa}
+      PGPOOL_POSTGRES_CUSTOM_PASSWORDS: ${DB_PASSWORD}
+      PGPOOL_ENABLE_LOAD_BALANCING: "yes"
+      PGPOOL_AUTO_FAILBACK: "yes"
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [data]
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?defina REDIS_PASSWORD}", "--rename-command", "FLUSHALL", "", "--rename-command", "CONFIG", ""]
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    networks: [data, web]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      pgpool: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_URL: https://${DOMAIN:?defina DOMAIN}
+      TRUST_PROXY_HOPS: 2
+      DB_HOST: pgpool
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-medtrouxa}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-medtrouxa}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET (32+ caracteres aleatórios)}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SEED_SAMPLE_CONTENT: ${SEED_SAMPLE_CONTENT:-false}
+      PAYMENT_PROVIDER: mercadopago
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:?defina MP_ACCESS_TOKEN}
+      MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:?defina MP_WEBHOOK_SECRET}
+      SMTP_URL: ${SMTP_URL:?defina SMTP_URL}
+      MAIL_FROM: ${MAIL_FROM:-MedTrouxa <nao-responda@medtrouxa.com.br>}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-claude-sonnet-5}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+        VITE_LEGAL_NAME: ${LEGAL_NAME:-}
+        VITE_CNPJ: ${CNPJ:-}
+        VITE_CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+        VITE_WHATSAPP: ${WHATSAPP:-}
+        VITE_INSTAGRAM: ${INSTAGRAM:-}
+    restart: unless-stopped
+    networks: [web]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    depends_on: [backend]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    networks: [web]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [frontend]
+
+  # Backup lógico diário, criptografado (AES-256), com retenção. Copie ./backups para fora do servidor.
+  backup:
+    image: alpine:3.20
+    restart: unless-stopped
+    networks: [data]
+    depends_on:
+      pgpool: { condition: service_healthy }
+    environment:
+      PGHOST: pgpool
+      PGUSER: ${DB_USER:-medtrouxa}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME:-medtrouxa}
+      BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE:?defina BACKUP_PASSPHRASE}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes: [./backups:/backups]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache postgresql17-client openssl >/dev/null
+        while true; do
+          f=/backups/medtrouxa-$$(date +%Y%m%d-%H%M).sql.gz.enc
+          pg_dump --no-owner | gzip | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:BACKUP_PASSPHRASE -out "$$f" \
+            && echo "backup ok: $$f" || echo "backup FALHOU"
+          find /backups -name '*.enc' -mtime +$$BACKUP_KEEP_DAYS -delete
+          sleep 86400
+        done
+
+networks:
+  data: { internal: true }   # banco e cache sem acesso à internet
+  web: {}
+
+volumes:
+  pg0_data:
+  pg1_data:
+  pg2_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

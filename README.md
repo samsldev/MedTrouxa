@@ -75,7 +75,36 @@ fino, céu estrelado discreto e modo escuro automático. Tokens em `frontend/src
 - **Redis**: cache-aside (árvore de assuntos, estatísticas, planos), ranking de XP, streak e rate-limit da IA.
   Se o Redis cair, a API continua funcionando (sem cache).
 
-## Rodando
+## Produção
+
+```bash
+cp .env.production.example .env.production   # preencha todos os segredos (openssl rand -base64 48)
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+- **HTTPS automático** via Caddy (aponte o DNS de `DOMAIN` para o servidor antes). Só as portas 80/443 ficam públicas.
+- **Pagamentos**: Mercado Pago Checkout Pro (Pix à vista ou cartão em até 12x). Configure o webhook no painel do
+  Mercado Pago para `https://SEU_DOMINIO/api/billing/webhook/mercadopago` (evento *Pagamentos*) e copie a
+  *assinatura secreta* para `MP_WEBHOOK_SECRET`. O acesso só é liberado após o webhook confirmar o pagamento.
+- **E-mail**: `SMTP_URL` é usado para recuperação de senha.
+- **Banco**: o schema é criado e atualizado por migrations (`backend/src/database/migrations`) automaticamente no boot.
+  Para mudanças no modelo: `cd backend && npm run migration:generate`.
+- **Admin**: defina `ADMIN_EMAIL`/`ADMIN_PASSWORD` no primeiro deploy; o painel fica em `/admin`.
+- **Backups** diários criptografados em `./backups`.
+
+Detalhes de segurança e LGPD: [SECURITY.md](SECURITY.md).
+
+### Plano gratuito × pagos
+
+| Recurso | Gratuito | Aprendiz | Alquimista / Arcano |
+| --- | --- | --- | --- |
+| Questões comentadas | 20 por dia | ilimitadas | ilimitadas |
+| Flashcards | ✓ | ✓ | ✓ |
+| Simulados | — | ✓ | ✓ |
+| Coruja IA | — | 30/h | 90/h |
+| Cronogramas guiados | — | — | ✓ |
+
+## Rodando (desenvolvimento)
 
 ```bash
 cp .env.example .env        # opcional: ANTHROPIC_API_KEY para a IA
@@ -84,7 +113,8 @@ docker compose up -d --build
 
 - Frontend: http://localhost:5173
 - API: http://localhost:3000/api (health em `/api/health`, mostra qual nó respondeu)
-- Admin semeado: `admin@medtrouxa.dev` / `admin123`
+- Admin de desenvolvimento: `admin@medtrouxa.dev` / `Coruja#Dev2026` (em produção, use `ADMIN_EMAIL`/`ADMIN_PASSWORD`)
+- Pagamentos simulados em dev (`PAYMENT_PROVIDER=fake`) — o checkout aprova na hora
 
 No primeiro boot o backend cria as tabelas (`DB_SYNC=true`) e popula áreas, temas, questões,
 baralhos e cronogramas de exemplo.
@@ -93,7 +123,7 @@ baralhos e cronogramas de exemplo.
 
 ```bash
 docker compose up -d pg-0 pg-1 pg-2 pgpool redis
-cd backend && npm i && DB_SYNC=true npm run start:dev
+cd backend && npm i && REDIS_URL=redis://:devredis@localhost:6379 npm run start:dev   # aplica as migrations
 cd frontend && npm i && npm run dev     # proxy /api -> :3000
 ```
 

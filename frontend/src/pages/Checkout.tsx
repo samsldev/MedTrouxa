@@ -26,8 +26,9 @@ export default function Checkout() {
   async function confirm() {
     setBusy(true); setError('');
     try {
-      await api('/billing/checkout', { body: { planId: plan!.id, paymentMethod: method, installments } });
-      nav('/planos?ok=1');
+      const r = await api<{ subscriptionId: string; status: string; redirectUrl: string | null }>('/billing/checkout', { body: { planId: plan!.id, paymentMethod: method, installments } });
+      if (r.redirectUrl && /^https:\/\/([a-z0-9-]+\.)*mercadopago\.com(\.br)?\//.test(r.redirectUrl)) { window.location.assign(r.redirectUrl); return; }
+      nav(`/pagamento/${r.subscriptionId}`);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
 
@@ -65,7 +66,7 @@ export default function Checkout() {
             </>
           )}
 
-          <p className="fine"><Icon name="shield" size={14} /> Ambiente de demonstração: a cobrança é simulada e nenhum dado de cartão é coletado.</p>
+          <p className="fine"><Icon name="shield" size={14} /> Pagamento processado pelo Mercado Pago. O MedTrouxa não armazena dados do seu cartão.</p>
           {error && <div className="error">{error}</div>}
         </section>
 
@@ -83,7 +84,7 @@ export default function Checkout() {
             <p className="fine">À vista você economiza {brl(installmentTotal(plan) - plan.cashPrice)}.</p>
           )}
           <button className="btn btn-gold btn-block btn-lg" disabled={busy} onClick={confirm}>
-            {busy ? 'Confirmando...' : 'Confirmar assinatura'}
+            {busy ? 'Redirecionando...' : 'Ir para o pagamento seguro'}
           </button>
         </aside>
       </div>

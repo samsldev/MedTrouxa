@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
+import { api, isPlanError } from '../api/client';
+import Upsell from '../components/Upsell';
 import Filters, { FilterValue } from '../components/Filters';
 
 interface Exam { id: string; title: string; questionIds: number[]; startedAt: string; finishedAt: string | null; score: number | null; durationMinutes: number }
@@ -11,6 +12,7 @@ export default function Exams() {
   const [filters, setFilters] = useState<FilterValue>({});
   const [form, setForm] = useState({ title: 'Simulado', count: 10, durationMinutes: 30 });
   const [error, setError] = useState('');
+  const [blocked, setBlocked] = useState('');
   useEffect(() => { api<Exam[]>('/exams').then(setExams); }, []);
 
   async function create(e: FormEvent) {
@@ -23,12 +25,13 @@ export default function Exams() {
         institution: filters.institution,
       } });
       nav(`/simulados/${exam.id}`);
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { if (isPlanError(err)) setBlocked(err.message); else setError((err as Error).message); }
   }
 
   return (
     <>
       <div className="page-head"><span className="kicker">Treino</span><h1>Simulados</h1></div>
+      {blocked && <Upsell message={blocked} />}
       <form className="card" onSubmit={create}>
         <h3>Montar simulado</h3>
         <Filters value={filters} onChange={setFilters} showStatus={false} />

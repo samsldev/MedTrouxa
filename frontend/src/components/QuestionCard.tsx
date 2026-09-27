@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { api, Question } from '../api/client';
+import { api, isPlanError, Question } from '../api/client';
+import Upsell from './Upsell';
 
 interface Result { correct: boolean; correctKey: string; commentary: string }
 
@@ -9,17 +10,20 @@ export default function QuestionCard({ q, index }: { q: Question; index?: number
   const [dist, setDist] = useState<Record<string, number> | null>(null);
   const [ai, setAi] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
+  const [blocked, setBlocked] = useState<string | null>(null);
+  const [aiBlocked, setAiBlocked] = useState<string | null>(null);
 
   async function answer() {
     if (!chosen) return;
-    setResult(await api<Result>(`/questions/${q.id}/answer`, { body: { chosenKey: chosen } }));
+    try { setResult(await api<Result>(`/questions/${q.id}/answer`, { body: { chosenKey: chosen } })); }
+    catch (e) { if (isPlanError(e)) { setBlocked(e.message); return; } throw e; }
     api<{ byKey: Record<string, number> }>(`/questions/${q.id}/stats`).then((d) => setDist(d.byKey));
   }
 
   async function explain() {
     setAiBusy(true);
     try { setAi((await api<{ reply: string }>(`/ai/explain/${q.id}`, { body: {} })).reply); }
-    catch (e) { setAi(`${(e as Error).message}`); }
+    catch (e) { if (isPlanError(e)) setAiBlocked(e.message); else setAi(`${(e as Error).message}`); }
     finally { setAiBusy(false); }
   }
 
@@ -45,13 +49,14 @@ export default function QuestionCard({ q, index }: { q: Question; index?: number
           );
         })}
       </div>
-      {!result ? (
+      {blocked ? <Upsell message={blocked} /> : !result ? (
         <button className="primary" disabled={!chosen} onClick={answer}>Responder</button>
       ) : (
         <div className={`feedback ${result.correct ? 'ok' : 'ko'}`}>
           <strong>{result.correct ? 'Acertou.' : `Errou — gabarito: ${result.correctKey}`}</strong>
           <p>{result.commentary}</p>
           <button className="ghost" onClick={explain} disabled={aiBusy}>{aiBusy ? 'A Coruja está pensando...' : 'Explicar com a Coruja'}</button>
+          {aiBlocked && <Upsell message={aiBlocked} compact />}
           {ai && <div className="ai-box">{ai}</div>}
         </div>
       )}

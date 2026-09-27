@@ -32,13 +32,18 @@ class StatsController {
   }
 
   @Get('ranking')
-  async ranking() {
+  async ranking(@CurrentUser() u: JwtUser) {
     const top = await this.redis.topRanking(20);
     if (!top.length) return [];
     const users: { id: string; name: string; university: string | null }[] = await this.db.query(
       `SELECT id, name, university FROM users WHERE id = ANY($1::uuid[])`, [top.map((t) => t.userId)]);
     const byId = new Map(users.map((x) => [x.id, x]));
-    return top.filter((t) => byId.has(t.userId)).map((t, i) => ({ position: i + 1, xp: t.xp, ...byId.get(t.userId) }));
+    // Minimização (LGPD): só primeiro nome + inicial do sobrenome; o id é devolvido só para o próprio usuário
+    const short = (n: string) => { const [a, ...r] = n.trim().split(/\s+/); return r.length ? `${a} ${r[r.length - 1][0]}.` : a; };
+    return top.filter((t) => byId.has(t.userId)).map((t, i) => {
+      const x = byId.get(t.userId)!;
+      return { position: i + 1, xp: t.xp, name: short(x.name), university: x.university, me: t.userId === u.sub };
+    });
   }
 }
 

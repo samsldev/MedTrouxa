@@ -3,22 +3,24 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { In, Repository } from 'typeorm';
 import { CurrentUser, JwtUser } from '../common/auth';
 import { Answer, Exam, ExamAnswer, Question } from '../database/entities';
+import { BillingModule, BillingService } from '../billing/billing.module';
+import { likeEscape } from '../questions/questions.module';
 import { RedisService } from '../redis/redis.module';
 
 class CreateExamDto {
-  @IsString() title: string;
+  @IsString() @Length(1, 120) title: string;
   @IsInt() @Min(5) @Max(120) count: number;
   @IsInt() @Min(5) @Max(300) durationMinutes: number;
   @IsOptional() @IsInt() subjectId?: number;
   @IsOptional() @IsInt() topicId?: number;
-  @IsOptional() @IsString() institution?: string;
+  @IsOptional() @IsString() @MaxLength(80) institution?: string;
 }
-class ExamAnswerDto { @IsInt() questionId: number; @IsOptional() @IsString() chosenKey?: string | null }
-class SubmitDto { @IsArray() @ValidateNested({ each: true }) @Type(() => ExamAnswerDto) answers: ExamAnswerDto[] }
+class ExamAnswerDto { @IsInt() questionId: number; @IsOptional() @IsString() @Matches(/^[A-E]$/) chosenKey?: string | null }
+class SubmitDto { @IsArray() @ArrayMaxSize(120) @ValidateNested({ each: true }) @Type(() => ExamAnswerDto) answers: ExamAnswerDto[] }
 
 @Injectable()
 class ExamsService {
@@ -27,13 +29,16 @@ class ExamsService {
     @InjectRepository(Question) private questions: Repository<Question>,
     @InjectRepository(Answer) private answers: Repository<Answer>,
     private redis: RedisService,
+    private billing: BillingService,
   ) {}
 
-  async create(userId: string, dto: CreateExamDto) {
+  async create(user: JwtUser, dto: CreateExamDto) {
+    const userId = user.sub;
+    await this.billing.require(user, 'exams', 'Simulados fazem parte dos planos pagos.');
     const qb = this.questions.createQueryBuilder('q').innerJoin('q.topic', 't').select('q.id', 'id');
     if (dto.topicId) qb.andWhere('q.topicId = :t', { t: dto.topicId });
     else if (dto.subjectId) qb.andWhere('t.subjectId = :s', { s: dto.subjectId });
-    if (dto.institution) qb.andWhere('q.institution ILIKE :i', { i: `%${dto.institution}%` });
+    if (dto.institution) qb.andWhere("q.institution ILIKE :i ESCAPE '\\'", { i: `%${likeEscape(dto.institution)}%` });
     const ids = (await qb.orderBy('random()').limit(dto.count).getRawMany<{ id: number }>()).map((r) => r.id);
     if (!ids.length) throw new BadRequestException('Nenhuma questão encontrada com esses filtros');
     return this.exams.save(this.exams.create({ userId, title: dto.title, questionIds: ids, durationMinutes: dto.durationMinutes }));
@@ -58,7 +63,8 @@ class ExamsService {
     if (!exam) throw new NotFoundException();
     if (exam.finishedAt) throw new BadRequestException('Simulado já finalizado');
     const qs = await this.questions.find({ where: { id: In(exam.questionIds) }, select: ['id', 'correctKey'] });
-    const chosen = new Map(dto.answers.map((a) => [a.questionId, a.chosenKey ?? null]));
+    const allowed = new Set(exam.questionIds);
+    const chosen = new Map(dto.answers.filter((a) => allowed.has(a.questionId)).map((a) => [a.questionId, a.chosenKey ?? null]));
     const results: ExamAnswer[] = qs.map((q) => {
       const c = chosen.get(q.id) ?? null;
       return { questionId: q.id, chosenKey: c, correct: c === q.correctKey };
@@ -81,7 +87,7 @@ class ExamsService {
 @Controller('exams')
 class ExamsController {
   constructor(private svc: ExamsService) {}
-  @Post() create(@CurrentUser() u: JwtUser, @Body() dto: CreateExamDto) { return this.svc.create(u.sub, dto); }
+  @Post() create(@CurrentUser() u: JwtUser, @Body() dto: CreateExamDto) { return this.svc.create(u, dto); }
   @Get() list(@CurrentUser() u: JwtUser) { return this.svc.list(u.sub); }
   @Get(':id') get(@CurrentUser() u: JwtUser, @Param('id', ParseUUIDPipe) id: string) { return this.svc.get(u.sub, id); }
   @Post(':id/submit') submit(@CurrentUser() u: JwtUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: SubmitDto) {
@@ -89,5 +95,5 @@ class ExamsController {
   }
 }
 
-@Module({ imports: [TypeOrmModule.forFeature([Exam, Question, Answer])], controllers: [ExamsController], providers: [ExamsService] })
+@Module({ imports: [TypeOrmModule.forFeature([Exam, Question, Answer]), BillingModule], controllers: [ExamsController], providers: [ExamsService] })
 export class ExamsModule {}

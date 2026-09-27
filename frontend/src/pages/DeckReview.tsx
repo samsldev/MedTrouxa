@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api } from '../api/client';
+import { api, isPlanError } from '../api/client';
+import Upsell from '../components/Upsell';
 
 interface Card { id: number; front: string; back: string }
 interface Deck { id: number; name: string; ownerId: string | null; cards: Card[] }
@@ -43,7 +44,7 @@ export default function DeckReview() {
       const { cards } = await api<{ cards: { front: string; back: string }[] }>('/ai/flashcards', { body: { text: aiText } });
       for (const c of cards) await api(`/flashcards/decks/${id}/cards`, { body: c });
       setAiMsg(`${cards.length} cards criados pela Coruja`); setAiText(''); load();
-    } catch (e) { setAiMsg(`${(e as Error).message}`); }
+    } catch (e) { setAiMsg(isPlanError(e) ? `PLAN:${e.message}` : `${(e as Error).message}`); }
   }
 
   if (!deck) return <div className="center">Carregando...</div>;
@@ -82,7 +83,7 @@ export default function DeckReview() {
             <h3>Gerar cards com a Coruja</h3>
             <textarea rows={6} placeholder="Cole um resumo ou trecho de aula..." value={aiText} onChange={(e) => setAiText(e.target.value)} />
             <button className="primary" disabled={!aiText.trim()} onClick={generate}>Gerar flashcards</button>
-            {aiMsg && <p className="muted">{aiMsg}</p>}
+            {aiMsg && (aiMsg.startsWith('PLAN:') ? <Upsell message={aiMsg.slice(5)} compact /> : <p className="muted">{aiMsg}</p>)}
           </div>
         </div>
       )}

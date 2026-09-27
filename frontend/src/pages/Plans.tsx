@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { Icon } from '../components/Brand';
+import Upsell from '../components/Upsell';
 
 interface Item { day: number; title: string; type: string; topicId?: number }
 interface Plan { id: number; title: string; description?: string; goal: string; items: Item[] }
@@ -31,11 +32,7 @@ export default function Plans() {
   return (
     <>
       <div className="page-head"><span className="kicker">Rotina</span><h1>Cronogramas</h1></div>
-      {locked && (
-        <div className="notice upsell">
-          <Icon name="lock" size={16} /> <span>{locked}.</span> <Link to="/planos" className="link">Conhecer planos →</Link>
-        </div>
-      )}
+      {locked && <Upsell message={locked} />}
       {mine.map((e) => {
         const today = Math.floor((Date.now() - new Date(e.startedAt).getTime()) / 86_400_000) + 1;
         const pct = Math.round((e.completed.length / e.plan.items.length) * 100);

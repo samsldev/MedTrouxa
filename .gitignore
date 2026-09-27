@@ -1,4 +1,7 @@
-node_modules
-dist
-.env
 *.log
+.env
+.env.production
+backups/
+dist
+node_modules
+*.tsbuildinfo

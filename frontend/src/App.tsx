@@ -1,7 +1,11 @@
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Icon, Logo } from './components/Brand';
+import Account from './pages/Account';
+import Admin from './pages/Admin';
 import Checkout from './pages/Checkout';
+import PaymentReturn from './pages/PaymentReturn';
+import { ForgotPassword, ResetPassword } from './pages/PasswordReset';
 import Coruja from './pages/Coruja';
 import Dashboard from './pages/Dashboard';
 import DeckReview from './pages/DeckReview';
@@ -37,11 +41,12 @@ function Layout() {
             <NavLink key={to} to={to}><Icon name={icon} /> <span>{label}</span></NavLink>
           ))}
         </nav>
+        {user?.role === 'admin' && <NavLink to="/admin" className="side-link"><Icon name="shield" size={16} /> <span>Admin</span></NavLink>}
         <NavLink to="/planos" className="side-plan"><Icon name="crown" size={16} /> <span>Planos</span></NavLink>
         <div className="me">
           <span className="avatar">{user?.name.charAt(0).toUpperCase()}</span>
-          <span className="me-name">{user?.name}</span>
-          <button className="icon-btn" onClick={logout} title="Sair" aria-label="Sair"><Icon name="logout" size={16} /></button>
+          <NavLink to="/conta" className="me-name" title="Minha conta">{user?.name}</NavLink>
+          <button className="icon-btn" onClick={() => logout()} title="Sair" aria-label="Sair"><Icon name="logout" size={16} /></button>
         </div>
       </aside>
       <main className="content"><Outlet /></main>
@@ -57,6 +62,11 @@ function Private({ bare = false }: { bare?: boolean }) {
   return bare ? <Outlet /> : <Layout />;
 }
 
+function AdminRoute() {
+  const { user } = useAuth();
+  return user?.role === 'admin' ? <Admin /> : <Navigate to="/inicio" replace />;
+}
+
 function Home() {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -68,10 +78,13 @@ export default function App() {
     <Routes>
       <Route index element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/esqueci-senha" element={<ForgotPassword />} />
+      <Route path="/redefinir-senha" element={<ResetPassword />} />
       <Route path="/termos" element={<Legal doc="termos" />} />
       <Route path="/privacidade" element={<Legal doc="privacidade" />} />
       <Route element={<Private bare />}>
         <Route path="checkout/:planId" element={<Checkout />} />
+        <Route path="pagamento/:id" element={<PaymentReturn />} />
       </Route>
       <Route element={<Private />}>
         <Route path="inicio" element={<Dashboard />} />
@@ -84,6 +97,8 @@ export default function App() {
         <Route path="coruja" element={<Coruja />} />
         <Route path="ranking" element={<Ranking />} />
         <Route path="planos" element={<Subscription />} />
+        <Route path="conta" element={<Account />} />
+        <Route path="admin" element={<AdminRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

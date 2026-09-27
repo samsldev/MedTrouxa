@@ -1,5 +1,6 @@
 import { INestApplicationContext, Logger } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
+import { isProd } from '../config/env';
+import { hashPassword, passwordProblem } from '../security/password';
 import { DataSource } from 'typeorm';
 import { Deck, Flashcard, PlanItem, Question, StudyPlan, Subject, Topic, User } from './entities';
 
@@ -104,6 +105,9 @@ function plan(goal: string, weeks: number, topics: Topic[]): PlanItem[] {
 export async function seedIfEmpty(app: INestApplicationContext) {
   const db = app.get(DataSource);
   const log = new Logger('Seed');
+  await ensureAdmin(app);
+  // Conteúdo de exemplo (áreas, questões, baralhos, cronogramas). Em produção, só com SEED_SAMPLE_CONTENT=true.
+  if (isProd() && process.env.SEED_SAMPLE_CONTENT !== 'true') return;
   if (await db.getRepository(Subject).count()) return;
   log.log('Banco vazio — populando dados iniciais...');
   await db.transaction(async (m) => {
@@ -127,9 +131,27 @@ export async function seedIfEmpty(app: INestApplicationContext) {
       m.create(StudyPlan, { title: 'Residência R1 — 12 semanas', goal: 'Residência', description: 'Foco em questões de provas de residência com revisão espaçada.', items: plan('Residência', 12, all) }),
       m.create(StudyPlan, { title: 'Clínica Médica intensivo (4 semanas)', goal: 'Faculdade', description: 'Para a prova do internato de clínica.', items: plan('Faculdade', 4, all.filter((t) => ['Cardiologia', 'Endocrinologia', 'Pneumologia', 'Nefrologia', 'Infectologia'].includes(t.name))) }),
     ]);
-    await m.save(m.create(User, {
-      name: 'Admin', email: 'admin@medtrouxa.dev', role: 'admin', passwordHash: await bcrypt.hash('admin123', 10),
-    }));
   });
-  log.log('Seed concluído (admin@medtrouxa.dev / admin123)');
+  log.log('Conteúdo inicial criado');
+}
+
+/**
+ * Cria/garante o admin a partir de ADMIN_EMAIL/ADMIN_PASSWORD (nunca uma senha fixa no código).
+ * Em desenvolvimento, sem essas variáveis, usa um admin local de conveniência.
+ */
+export async function ensureAdmin(app: INestApplicationContext) {
+  const repo = app.get(DataSource).getRepository(User);
+  const log = new Logger('Seed');
+  let email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  let password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    if (isProd()) { log.warn('ADMIN_EMAIL/ADMIN_PASSWORD não definidos: nenhum admin criado'); return; }
+    email = 'admin@medtrouxa.dev'; password = 'Coruja#Dev2026';
+  }
+  const problem = passwordProblem(password, email);
+  if (problem) { log.error(`ADMIN_PASSWORD fraca: ${problem}`); if (isProd()) process.exit(1); return; }
+  const existing = await repo.findOneBy({ email });
+  if (existing) { if (existing.role !== 'admin') await repo.update(existing.id, { role: 'admin' }); return; }
+  await repo.save(repo.create({ name: 'Admin', email, role: 'admin', passwordHash: await hashPassword(password), termsAcceptedAt: new Date(), termsVersion: 'admin' }));
+  log.log(`Admin criado: ${email}${isProd() ? '' : ` / ${password} (apenas desenvolvimento)`}`);
 }

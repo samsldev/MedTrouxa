@@ -1,35 +1,40 @@
-import { Body, Controller, Get, Injectable, Module, NotFoundException, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Injectable, Module, NotFoundException, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { Repository } from 'typeorm';
 import { AdminOnly, CurrentUser, JwtUser } from '../common/auth';
 import { Answer, Question } from '../database/entities';
+import { BillingModule, BillingService } from '../billing/billing.module';
 import { RedisService } from '../redis/redis.module';
+import { RateLimit } from '../security/rate-limit';
+
+/** Escapa curingas do LIKE para buscas literais */
+export const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 export class QuestionFilter {
   @IsOptional() @Type(() => Number) @IsInt() subjectId?: number;
   @IsOptional() @Type(() => Number) @IsInt() topicId?: number;
-  @IsOptional() @IsString() institution?: string;
-  @IsOptional() @Type(() => Number) @IsInt() year?: number;
+  @IsOptional() @IsString() @MaxLength(80) institution?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1900) @Max(2100) year?: number;
   @IsOptional() @IsIn(['easy', 'medium', 'hard']) difficulty?: string;
   @IsOptional() @IsIn(['all', 'unanswered', 'wrong']) status?: string;
-  @IsOptional() @Type(() => Number) @IsInt() page?: number;
-  @IsOptional() @Type(() => Number) @IsInt() limit?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(10000) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(50) limit?: number;
 }
 
-class AltDto { @IsString() key: string; @IsString() text: string }
+class AltDto { @IsString() @Matches(/^[A-E]$/) key: string; @IsString() @Length(1, 2000) text: string }
 class CreateQuestionDto {
-  @IsString() statement: string;
-  @IsArray() @ArrayMinSize(2) @ValidateNested({ each: true }) @Type(() => AltDto) alternatives: AltDto[];
-  @IsString() correctKey: string;
-  @IsString() commentary: string;
+  @IsString() @Length(10, 10000) statement: string;
+  @IsArray() @ArrayMinSize(2) @ArrayMaxSize(5) @ValidateNested({ each: true }) @Type(() => AltDto) alternatives: AltDto[];
+  @IsString() @Matches(/^[A-E]$/) correctKey: string;
+  @IsString() @Length(1, 20000) commentary: string;
   @IsInt() topicId: number;
-  @IsOptional() @IsString() institution?: string;
-  @IsOptional() @IsInt() year?: number;
+  @IsOptional() @IsString() @MaxLength(80) institution?: string;
+  @IsOptional() @IsInt() @Min(1900) @Max(2100) year?: number;
   @IsOptional() @IsIn(['easy', 'medium', 'hard']) difficulty?: 'easy' | 'medium' | 'hard';
 }
-class AnswerDto { @IsString() chosenKey: string }
+class AnswerDto { @IsString() @Matches(/^[A-E]$/) chosenKey: string }
 
 @Injectable()
 export class QuestionsService {
@@ -37,13 +42,14 @@ export class QuestionsService {
     @InjectRepository(Question) private questions: Repository<Question>,
     @InjectRepository(Answer) private answers: Repository<Answer>,
     private redis: RedisService,
+    private billing: BillingService,
   ) {}
 
   query(userId: string, f: QuestionFilter) {
     const qb = this.questions.createQueryBuilder('q').leftJoinAndSelect('q.topic', 't');
     if (f.topicId) qb.andWhere('q.topicId = :topicId', { topicId: f.topicId });
     else if (f.subjectId) qb.andWhere('t.subjectId = :subjectId', { subjectId: f.subjectId });
-    if (f.institution) qb.andWhere('q.institution ILIKE :inst', { inst: `%${f.institution}%` });
+    if (f.institution) qb.andWhere("q.institution ILIKE :inst ESCAPE '\\'", { inst: `%${likeEscape(f.institution)}%` });
     if (f.year) qb.andWhere('q.year = :year', { year: f.year });
     if (f.difficulty) qb.andWhere('q.difficulty = :diff', { diff: f.difficulty });
     if (f.status === 'unanswered') {
@@ -62,12 +68,25 @@ export class QuestionsService {
     return { items, total, page, limit };
   }
 
-  async answer(userId: string, questionId: number, chosenKey: string, examId: string | null = null) {
+  async answer(user: JwtUser, questionId: number, chosenKey: string) {
+    const userId = user.sub;
     const q = await this.questions.findOne({ where: { id: questionId }, select: ['id', 'correctKey', 'commentary'] });
     if (!q) throw new NotFoundException();
+    // Limite diário do plano gratuito
+    const { answersPerDay } = await this.billing.limits(user);
+    if (answersPerDay !== null) {
+      const key = `ans:${userId}:${new Date().toISOString().slice(0, 10)}`;
+      const n = await this.redis.client.incr(key).catch(() => 0);
+      if (n === 1) await this.redis.client.expire(key, 26 * 3600).catch(() => undefined);
+      if (n > answersPerDay) {
+        throw new ForbiddenException({ code: 'PLAN_REQUIRED', feature: 'answers', message: `Você atingiu o limite de ${answersPerDay} questões por dia do plano gratuito.` });
+      }
+    }
+    const firstTime = !(await this.answers.existsBy({ userId, questionId }));
     const correct = q.correctKey === chosenKey;
-    await this.answers.insert({ userId, questionId, chosenKey, correct, examId });
-    await this.redis.addXp(userId, correct ? 10 : 2);
+    await this.answers.insert({ userId, questionId, chosenKey, correct, examId: null });
+    // XP só na primeira resposta de cada questão (evita manipulação do ranking)
+    if (firstTime) await this.redis.addXp(userId, correct ? 10 : 2);
     await this.redis.invalidate(`stats:${userId}`);
     return { correct, correctKey: q.correctKey, commentary: q.commentary };
   }
@@ -104,8 +123,9 @@ class QuestionsController {
   }
 
   @Post(':id/answer')
+  @RateLimit({ limit: 60, windowSec: 60, key: 'user' })
   answer(@CurrentUser() u: JwtUser, @Param('id', ParseIntPipe) id: number, @Body() dto: AnswerDto) {
-    return this.svc.answer(u.sub, id, dto.chosenKey);
+    return this.svc.answer(u, id, dto.chosenKey);
   }
 
   @Get(':id/stats') stats(@Param('id', ParseIntPipe) id: number) { return this.svc.distribution(id); }
@@ -114,7 +134,7 @@ class QuestionsController {
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Question, Answer])],
+  imports: [TypeOrmModule.forFeature([Question, Answer]), BillingModule],
   controllers: [QuestionsController],
   providers: [QuestionsService],
   exports: [QuestionsService],
