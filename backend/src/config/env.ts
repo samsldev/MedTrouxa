@@ -24,7 +24,7 @@ export function validateEnv() {
     if (process.env.DB_SYNC === 'true') errors.push('DB_SYNC=true é proibido em produção (use migrations)');
     if (process.env.DEMO_CONTENT === 'true') console.warn('[env] DEMO_CONTENT ignorado em produção');
     if ((process.env.PAYMENT_PROVIDER ?? 'fake') === 'fake') errors.push('PAYMENT_PROVIDER=fake é proibido em produção (use mercadopago)');
-    if (process.env.PAYMENT_PROVIDER === 'mercadopago') { req('MP_ACCESS_TOKEN'); req('MP_WEBHOOK_SECRET'); }
+    if (process.env.PAYMENT_PROVIDER === 'mercadopago') { req('MP_ACCESS_TOKEN'); req('MP_PUBLIC_KEY'); req('MP_WEBHOOK_SECRET'); }
     if (process.env.NFSE_ENABLED === 'simulate') errors.push('NFSE_ENABLED=simulate é proibido em produção (use 1 com o certificado A1)');
     if (!process.env.SMTP_URL) errors.push('SMTP_URL é obrigatório em produção (e-mails de recuperação de senha)');
   } else if (!process.env.JWT_SECRET) {

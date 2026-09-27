@@ -8,7 +8,8 @@ interface Data {
   new_in_range: number; canceled_in_range: number; expired_in_range: number; statuses: Record<string, number>;
   plans: { plan: string; pix: number; card: number; granted: number; total: number; renewing: number; mrr_cents: number }[];
   checkout: { totals: FunnelRow | null; by_plan: FunnelRow[]; by_method: FunnelRow[]; by_installments: FunnelRow[]; by_landing: FunnelRow[]; by_source: FunnelRow[] };
-  attribution: Record<'by_source' | 'by_campaign' | 'by_landing', { name: string; revenue_cents: number }[]>;
+  discount_cents: number;
+  attribution: Record<'by_source' | 'by_campaign' | 'by_landing' | 'by_coupon', { name: string; revenue_cents: number }[]>;
   refund: { open: number; closing_soon: number; opened_in_range: number; refunded_in_range: number; refund_rate: number; by_plan_rate: { name: string; opened: number; refunded: number; refund_rate: number }[]; by_plan: { name: string; count: number }[]; by_method: { name: string; count: number }[] };
   profit: {
     tax: { revenue_pct: number; profit_pct: number; fee_pix_pct: number; fee_card_pct: number; fee_source: string; monthly_cost_cents: number };
@@ -126,7 +127,9 @@ export default function Subscriptions() {
               <div>{revenueTable(d.attribution.by_source, 'Fonte')}</div>
               <div>{revenueTable(d.attribution.by_campaign, 'Campanha')}</div>
               <div>{revenueTable(d.attribution.by_landing, 'Landing')}</div>
+              <div>{revenueTable(d.attribution.by_coupon, 'Cupom')}</div>
             </div>
+            <Note>Descontos concedidos por cupons no período: {brl(d.discount_cents)}.</Note>
           </Section>
 
           <Section title="Quem são os pagantes">

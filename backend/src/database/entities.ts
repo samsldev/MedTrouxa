@@ -22,7 +22,7 @@ export class User {
   @Column({ type: 'varchar', nullable: true }) twoFactorMethod?: 'totp' | 'email' | null;
   @Column({ type: 'timestamptz', nullable: true }) twoFactorEnabledAt?: Date | null;
   /** Segredo TOTP criptografado (AES-256-GCM) */
-  @Column({ type: 'text', nullable: true, select: false }) totpSecretEnc?: string | null;
+  @Column({ type: 'text', nullable: true }) totpSecretEnc?: string | null;
   /** Hashes SHA-256 dos códigos de recuperação ainda não usados */
   @Column({ type: 'jsonb', nullable: true, select: false }) recoveryCodes?: string[] | null;
   /** Aceite dos Termos de uso e Política de privacidade (LGPD art. 8º) */
@@ -180,6 +180,16 @@ export class Subscription {
   @Column({ type: 'text', nullable: true }) utmMedium?: string | null;
   @Column({ type: 'text', nullable: true }) utmCampaign?: string | null;
   @Column({ type: 'text', nullable: true }) lp?: string | null;
+  /** Cupom aplicado e desconto concedido (centavos, já descontado de `amount`) */
+  @Column({ type: 'text', nullable: true }) couponCode?: string | null;
+  @Column({ type: 'int', default: 0 }) discount: number;
+  /** Motivo de recusa/pendência informado pelo provedor */
+  @Column({ type: 'text', nullable: true }) statusDetail?: string | null;
+  /** Pix: copia-e-cola, QR em base64 e validade */
+  @Column({ type: 'text', nullable: true }) pixQrCode?: string | null;
+  @Column({ type: 'text', nullable: true }) pixQrBase64?: string | null;
+  @Column({ type: 'text', nullable: true }) pixTicketUrl?: string | null;
+  @Column({ type: 'timestamptz', nullable: true }) pixExpiresAt?: Date | null;
 }
 
 /** Depoimento/aprovação de aluno. Gerenciado pelo admin; `isDemo` marca conteúdo de exemplo (nunca em produção). */

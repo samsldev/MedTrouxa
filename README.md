@@ -83,9 +83,14 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 ```
 
 - **HTTPS automático** via Caddy (aponte o DNS de `DOMAIN` para o servidor antes). Só as portas 80/443 ficam públicas.
-- **Pagamentos**: Mercado Pago Checkout Pro (Pix à vista ou cartão em até 12x). Configure o webhook no painel do
-  Mercado Pago para `https://SEU_DOMINIO/api/billing/webhook/mercadopago` (evento *Pagamentos*) e copie a
-  *assinatura secreta* para `MP_WEBHOOK_SECRET`. O acesso só é liberado após o webhook confirmar o pagamento.
+- **Pagamentos (checkout próprio)**: `/checkout/:plano` cobra no próprio site pelo Mercado Pago (checkout transparente):
+  cartão em até 12x com campos seguros do MercadoPago.js (o número do cartão nunca passa pelo nosso servidor, só um token)
+  ou Pix com QR Code e copia-e-cola na tela, confirmado automaticamente. Tem cupons de desconto (aba **Cupons** do console),
+  validação de CPF/CNPJ (vai para o MP e para a NFS-e) e aceite dos termos. Configure `MP_ACCESS_TOKEN`, `MP_PUBLIC_KEY`
+  e o webhook `https://SEU_DOMINIO/api/billing/webhook/mercadopago` (evento *Pagamentos*) com a *assinatura secreta* em
+  `MP_WEBHOOK_SECRET`. Cartão aprovado libera na hora; Pix e pagamentos em análise são liberados pelo webhook.
+  Para cobrar exatamente os valores anunciados no parcelado, deixe os juros do parcelamento **por conta do vendedor** no painel do MP.
+  Em desenvolvimento (`PAYMENT_PROVIDER=fake`) o cartão é simulado (final `0002` recusa) e o Pix tem o botão "Simular pagamento".
 - **E-mail**: `SMTP_URL` envia os códigos de confirmação de cadastro, os códigos de 2FA, alertas de segurança e a recuperação de senha.
 - **2FA**: defina `ENCRYPTION_KEY` (`openssl rand -base64 32`) e guarde-a com os backups — sem ela, o 2FA por app deixa de funcionar.
 - **Banco**: o schema é criado e atualizado por migrations (`backend/src/database/migrations`) automaticamente no boot.

@@ -5,6 +5,7 @@ interface Entry { admin_email: string; action: string; target_user: string | nul
 const ACTIONS: Record<string, string> = {
   'user.grant_plan': 'Concedeu plano', 'user.revoke_plan': 'Encerrou assinatura', 'user.suspend': 'Suspendeu conta', 'user.unsuspend': 'Reativou conta',
   'user.reset_2fa': 'Removeu 2FA', 'user.verify_email': 'Confirmou e-mail',
+  'coupon.create': 'Criou cupom', 'coupon.enable': 'Reativou cupom', 'coupon.disable': 'Pausou cupom',
 };
 
 /** Auditoria — toda ação administrativa sensível, append-only. */

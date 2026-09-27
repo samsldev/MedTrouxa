@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectDataSource, InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsArray, IsDateString, IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 import { DataSource, ILike, Repository } from 'typeorm';
 import { AuthModule, AuthService } from '../auth/auth.module';
 import { AdminOnly, CurrentUser, JwtUser, Public } from '../common/auth';
@@ -33,7 +33,7 @@ const DAY = 86_400_000;
 async function loadSubs(db: DataSource): Promise<SubRow[]> {
   const rows: Record<string, unknown>[] = await db.query(
     `SELECT id, "userId", "planId", "paymentMethod", installments, amount, status, "createdAt", "paidAt", "startsAt", "expiresAt",
-            "canceledAt", "grantedBy", "utmSource", "utmCampaign", lp
+            "canceledAt", "grantedBy", "utmSource", "utmCampaign", lp, "couponCode", discount
        FROM subscriptions WHERE "userId" <> 'deleted-user' OR "paidAt" IS NOT NULL ORDER BY "createdAt" DESC LIMIT 200000`);
   const d = (v: unknown) => (v ? new Date(v as string) : null);
   return rows.map((r) => ({
@@ -41,6 +41,7 @@ async function loadSubs(db: DataSource): Promise<SubRow[]> {
     installments: Number(r.installments), amount: Number(r.amount), status: r.status as string, createdAt: new Date(r.createdAt as string),
     paidAt: d(r.paidAt), startsAt: d(r.startsAt), expiresAt: d(r.expiresAt), canceledAt: d(r.canceledAt), grantedBy: (r.grantedBy as string) ?? null,
     utmSource: (r.utmSource as string) ?? null, utmCampaign: (r.utmCampaign as string) ?? null, lp: (r.lp as string) ?? null,
+    couponCode: (r.couponCode as string) ?? null, discount: Number(r.discount ?? 0),
   }));
 }
 
@@ -367,6 +368,38 @@ class SupportController {
   }
 }
 
+class CouponDto extends ReauthDto {
+  @IsString() @Length(3, 32) couponCode: string;
+  @IsInt() @Min(1) @Max(90) percentOff: number;
+  @IsOptional() @IsArray() @IsIn(PLANS.map((p) => p.id), { each: true }) planIds?: string[];
+  @IsOptional() @IsInt() @Min(1) maxRedemptions?: number;
+  @IsOptional() @IsDateString() expiresAt?: string;
+}
+
+/** Cupons de desconto (marketing): criação exige reautenticação; tudo fica na auditoria. */
+@Controller('admin/coupons')
+class CouponsController {
+  constructor(private billing: BillingService, private audit: AuditService, private reauth: ReauthService) {}
+
+  @AdminOnly() @Get() list() { return this.billing.coupons.list(); }
+
+  @AdminOnly() @Post() @RateLimit({ limit: 20, windowSec: 600, key: 'user' })
+  async create(@CurrentUser() admin: JwtUser, @Body() dto: CouponDto) {
+    await this.reauth.require(admin, dto);
+    const code = await this.billing.coupons.create({ code: dto.couponCode, percentOff: dto.percentOff, planIds: dto.planIds ?? null, maxRedemptions: dto.maxRedemptions ?? null, expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null, createdBy: admin.email });
+    await this.audit.record(admin, 'coupon.create', null, { code, percent_off: dto.percentOff, plans: dto.planIds ?? 'todos', max: dto.maxRedemptions ?? null, expires_at: dto.expiresAt ?? null });
+    return { code };
+  }
+
+  @AdminOnly() @Post(':code/:state') @RateLimit({ limit: 30, windowSec: 600, key: 'user' })
+  async toggle(@CurrentUser() admin: JwtUser, @Param('code') code: string, @Param('state') state: string) {
+    if (state !== 'enable' && state !== 'disable') throw new NotFoundException();
+    await this.billing.coupons.setActive(code, state === 'enable');
+    await this.audit.record(admin, state === 'enable' ? 'coupon.enable' : 'coupon.disable', null, { code: code.toUpperCase() });
+    return { ok: true };
+  }
+}
+
 @Controller('admin/audit')
 class AuditController {
   constructor(private audit: AuditService) {}
@@ -375,6 +408,6 @@ class AuditController {
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Subscription]), AuthModule, BillingModule, AdminCoreModule],
-  controllers: [TrackerController, ReportsController, SupportController, AuditController],
+  controllers: [TrackerController, ReportsController, SupportController, CouponsController, AuditController],
 })
 export class InsightsModule {}

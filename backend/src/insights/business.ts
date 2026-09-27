@@ -17,6 +17,7 @@ export interface SubRow {
   id: string; userId: string; planId: string; paymentMethod: string; installments: number; amount: number; status: string;
   createdAt: Date; paidAt: Date | null; startsAt: Date | null; expiresAt: Date | null; canceledAt: Date | null;
   grantedBy: string | null; utmSource: string | null; utmCampaign: string | null; lp: string | null;
+  couponCode?: string | null; discount?: number;
 }
 
 const DAY = 86_400_000;
@@ -225,7 +226,8 @@ export function subscriptionsJson(
       by_landing: funnelRows(started, (s) => s.lp ?? '(sem landing)'),
       by_source: funnelRows(started, (s) => s.utmSource ?? '(direto)'),
     },
-    attribution: { by_source: revenueBy((s) => s.utmSource), by_campaign: revenueBy((s) => s.utmCampaign), by_landing: revenueBy((s) => s.lp) },
+    attribution: { by_source: revenueBy((s) => s.utmSource), by_campaign: revenueBy((s) => s.utmCampaign), by_landing: revenueBy((s) => s.lp), by_coupon: revenueBy((s) => s.couponCode ?? null) },
+    discount_cents: subs.filter((s) => !s.grantedBy && inRange(s.paidAt, from, to)).reduce((a, s) => a + (s.discount ?? 0), 0),
     refund: refundJson(subs, now, from, to),
     profit: profitJson(subs, now, from, to, tax),
     customers: {

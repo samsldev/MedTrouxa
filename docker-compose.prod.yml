@@ -122,6 +122,7 @@ services:
       SEED_SAMPLE_CONTENT: ${SEED_SAMPLE_CONTENT:-false}
       PAYMENT_PROVIDER: mercadopago
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:?defina MP_ACCESS_TOKEN}
+      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:?defina MP_PUBLIC_KEY}
       MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:?defina MP_WEBHOOK_SECRET}
       SMTP_URL: ${SMTP_URL:?defina SMTP_URL}
       MAIL_FROM: ${MAIL_FROM:-MedTrouxa <nao-responda@medtrouxa.com.br>}

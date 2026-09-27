@@ -34,6 +34,13 @@ Para reportar uma vulnerabilidade, escreva para o contato de suporte da platafor
   uso de código de recuperação disparam **e-mail de alerta**.
 - Com TOTP ativo, não é possível trocar para código por e-mail na hora do login (evita rebaixar a proteção).
 
+## Pagamentos
+
+- Checkout transparente com campos seguros (iframes) do MercadoPago.js: dados do cartão só existem no Mercado Pago (PCI DSS SAQ A). O backend recebe um token de uso único.
+- Valor sempre calculado no servidor (plano + parcelas + cupom); chave de idempotência por pedido evita cobrança dupla; webhook com assinatura HMAC e reconsulta do pagamento na API.
+- Cupons: código restrito a `[A-Z0-9_-]`, validade, planos e limite de usos checados no servidor; criação exige reautenticação e fica na auditoria.
+- CSP libera apenas os domínios do Mercado Pago necessários (SDK, iframes e antifraude).
+
 ## Console administrativo
 
 - Rotas `/api/admin/*` respondem **404** para quem não é admin (não revelam que existem) e exigem sessão com 2FA por app em produção (`ADMIN_REQUIRE_TOTP`).
