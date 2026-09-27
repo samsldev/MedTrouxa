@@ -1,0 +1,25 @@
+---
+workflow: general-video
+flow: automation
+storyboard: no
+message: "Dúvida não pode esperar (Coruja IA)"
+destination: meta-ads-carrosel
+aspect: "4:5"
+language: pt-BR
+audience: estudantes de medicina (graduação, internato, ENAMED e Residência)
+length: "5 lâminas"
+angle: dor do cliente, persuasivo e orientado a conversão
+---
+
+# carrosel · criativo_3 — Dúvida não pode esperar (Coruja IA)
+
+## Intent
+Anúncio de Meta Ads (carrosel) atacando a dor "Dúvida não pode esperar (Coruja IA)" e convertendo para o MedTrouxa, no estilo do site
+(meia-noite + pergaminho + ouro, Cormorant Garamond + Inter). Pedido do usuário: "super conversivo, super persuasivo".
+
+## Customizations
+- Carrossel de 5 lâminas estáticas 4:5: capa (gancho) → dor → explicação → recursos → CTA.
+
+## Notes
+- Claims somente verdadeiros (preços reais, 20 questões grátis/dia, 7 dias de garantia, recursos existentes). Sem números de alunos.
+- Gerado por `marketing/metaads/_fonte/gerar.mjs` — edite os roteiros/cenas lá e rode o gerador de novo.

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <!-- GSAP embutido (sem rede no render: regra de determinismo do HyperFrames) -->
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #090a17; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #090a17; }
+      [data-composition-id="main"] > div[data-composition-src] { position: absolute; inset: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1080" data-height="1920">
+      <div id="slot-gancho" data-composition-id="gancho" data-composition-src="compositions/gancho.html"
+        data-start="0" data-duration="3" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div id="slot-dor" data-composition-id="dor" data-composition-src="compositions/dor.html"
+        data-start="3" data-duration="4" data-track-index="1" data-width="1080" data-height="1920"></div>
+      <div id="slot-virada" data-composition-id="virada" data-composition-src="compositions/virada.html"
+        data-start="7" data-duration="4.5" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div id="slot-oferta" data-composition-id="oferta" data-composition-src="compositions/oferta.html"
+        data-start="11.5" data-duration="3.5" data-track-index="1" data-width="1080" data-height="1920"></div>
+      <audio id="trilha" src="assets/trilha.wav" data-start="0" data-duration="15" data-track-index="3" data-volume="0.9"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

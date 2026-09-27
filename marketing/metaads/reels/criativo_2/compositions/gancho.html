@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+@font-face { font-family: "Cormorant Garamond"; font-weight: 600; font-style: normal; font-display: block; src: url("assets/fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Cormorant Garamond"; font-weight: 600; font-style: italic; font-display: block; src: url("assets/fonts/cormorant-garamond-latin-600-italic.woff2") format("woff2"); }
+@font-face { font-family: "Cormorant Garamond"; font-weight: 700; font-style: normal; font-display: block; src: url("assets/fonts/cormorant-garamond-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Cormorant Garamond"; font-weight: 700; font-style: italic; font-display: block; src: url("assets/fonts/cormorant-garamond-latin-700-italic.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: block; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: block; src: url("assets/fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: block; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: block; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; font-style: normal; font-display: block; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+#root { position: absolute; inset: 0; overflow: hidden; background: #090a17; color: #f6f1e6; font-family: "Inter", sans-serif; }
+.bg, .bg-glow, .bg-glow2, .bg-stars, .bg-ghost, .bg-rule { position: absolute; pointer-events: none; }
+.bg { inset: 0; }
+.bg-glow { width: 1404px; height: 1404px; left: -486px; top: -594px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(64, 54, 170, 0.62) 0%, rgba(43, 36, 112, 0.28) 38%, rgba(9, 10, 23, 0) 70%); }
+.bg-glow2 { width: 1188px; height: 1188px; right: -540px; bottom: -378px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 176, 108, 0.22) 0%, rgba(212, 176, 108, 0.06) 42%, rgba(9, 10, 23, 0) 70%); }
+.bg-stars { inset: 0; width: 100%; height: 100%; }
+.bg-ghost { left: 60px; bottom: 384px; font-family: "Cormorant Garamond", serif; font-weight: 700; font-size: 389px;
+  line-height: 0.8; color: #d4b06c; opacity: 0.09; white-space: nowrap; letter-spacing: -0.02em; }
+.bg-rule { left: 80px; right: 150px; height: 3px; background: linear-gradient(90deg, rgba(212,176,108,0.85), rgba(212,176,108,0)); transform-origin: left center; }
+.brand { position: absolute; top: 182px; left: 80px; display: flex; align-items: center; gap: 18px; }
+.brand-nome { font-family: "Cormorant Garamond", serif; font-weight: 600; font-size: 46px; color: #f6f1e6; letter-spacing: -0.01em; }
+.brand-nome em, .t em, .lead em, .big em { font-style: italic; color: #e3c48a; }
+.stage { position: absolute; left: 80px; right: 150px; top: 300px; bottom: 470px; display: flex; flex-direction: column; justify-content: center; gap: 36px; }
+.kick { align-self: flex-start; display: inline-flex; align-items: center; gap: 14px; padding: 14px 26px; border-radius: 999px;
+  border: 2px solid rgba(212, 176, 108, 0.55); background: rgba(212, 176, 108, 0.12); color: #e3c48a;
+  font-weight: 700; font-size: 28px; letter-spacing: 0.16em; text-transform: uppercase; }
+.t { font-family: "Cormorant Garamond", serif; font-weight: 700; letter-spacing: -0.015em; line-height: 1.02; color: #f6f1e6; }
+.lead { font-size: 42px; line-height: 1.35; color: #b3b0c6; font-weight: 500; }
+.w { display: inline-block; }
+
+.g-line { font-size: 124px; opacity: 0; display: block; }
+      .g-line em { font-style: italic; color: #e3c48a; }
+      .g-metro { display: flex; gap: 16px; margin-top: 18px; }
+      .g-metro i { display: block; width: 10px; height: 42px; border-radius: 6px; background: #d4b06c; opacity: 0.22; }
+      </style>
+      <div id="root" data-composition-id="gancho" data-width="1080" data-height="1920">
+<div class="bg" aria-hidden="true">
+    <div class="bg-glow" id="gancho-glow"></div>
+    <div class="bg-glow2" id="gancho-glow2"></div>
+    <svg class="bg-stars" id="gancho-stars" viewBox="0 0 1080 1920" preserveAspectRatio="none"><circle cx="609.5" cy="873.1" r="3.2" fill="#d4b06c" opacity="0.49"/><circle cx="294.2" cy="1445.5" r="1.5" fill="#d4b06c" opacity="0.61"/><circle cx="813.1" cy="1001.8" r="1.5" fill="#d4b06c" opacity="0.66"/><circle cx="565.3" cy="1173.3" r="2.2" fill="#d4b06c" opacity="0.56"/><circle cx="21.5" cy="654.3" r="1.5" fill="#d4b06c" opacity="0.78"/><circle cx="660.0" cy="1895.6" r="3.2" fill="#d4b06c" opacity="0.82"/><circle cx="917.0" cy="1635.8" r="2.2" fill="#d4b06c" opacity="0.81"/><circle cx="456.2" cy="1792.4" r="1.5" fill="#d4b06c" opacity="0.53"/><circle cx="1066.3" cy="297.3" r="1.5" fill="#d4b06c" opacity="0.67"/><circle cx="934.8" cy="659.9" r="2.2" fill="#d4b06c" opacity="0.74"/><circle cx="46.9" cy="776.3" r="3.2" fill="#d4b06c" opacity="0.60"/><circle cx="1008.2" cy="1228.1" r="1.5" fill="#d4b06c" opacity="0.57"/><circle cx="827.1" cy="503.3" r="2.2" fill="#d4b06c" opacity="0.53"/><circle cx="984.8" cy="1228.5" r="1.5" fill="#d4b06c" opacity="0.50"/><circle cx="371.2" cy="1552.7" r="1.5" fill="#d4b06c" opacity="0.61"/><circle cx="397.2" cy="831.7" r="3.2" fill="#d4b06c" opacity="0.42"/><circle cx="615.8" cy="924.5" r="1.5" fill="#d4b06c" opacity="0.62"/><circle cx="690.8" cy="147.1" r="1.5" fill="#d4b06c" opacity="0.58"/><circle cx="268.7" cy="655.0" r="2.2" fill="#d4b06c" opacity="0.47"/><circle cx="844.8" cy="986.2" r="1.5" fill="#d4b06c" opacity="0.39"/><circle cx="691.0" cy="1834.8" r="3.2" fill="#d4b06c" opacity="0.73"/><circle cx="537.9" cy="156.8" r="2.2" fill="#d4b06c" opacity="0.58"/><circle cx="797.5" cy="767.9" r="1.5" fill="#d4b06c" opacity="0.82"/><circle cx="467.9" cy="891.2" r="1.5" fill="#d4b06c" opacity="0.53"/><circle cx="980.3" cy="639.6" r="2.2" fill="#d4b06c" opacity="0.64"/><circle cx="379.3" cy="1881.7" r="3.2" fill="#d4b06c" opacity="0.45"/><circle cx="82.7" cy="1018.9" r="1.5" fill="#d4b06c" opacity="0.38"/><circle cx="317.2" cy="1469.0" r="2.2" fill="#d4b06c" opacity="0.62"/><circle cx="666.1" cy="249.1" r="1.5" fill="#d4b06c" opacity="0.81"/><circle cx="554.7" cy="333.8" r="1.5" fill="#d4b06c" opacity="0.51"/><circle cx="1015.4" cy="1187.6" r="3.2" fill="#d4b06c" opacity="0.72"/><circle cx="150.7" cy="683.9" r="1.5" fill="#d4b06c" opacity="0.50"/><circle cx="88.2" cy="515.2" r="1.5" fill="#d4b06c" opacity="0.80"/><circle cx="574.1" cy="681.7" r="2.2" fill="#d4b06c" opacity="0.36"/><circle cx="645.2" cy="1746.7" r="1.5" fill="#d4b06c" opacity="0.52"/><circle cx="501.3" cy="129.6" r="3.2" fill="#d4b06c" opacity="0.38"/><circle cx="787.4" cy="1107.1" r="2.2" fill="#d4b06c" opacity="0.52"/><circle cx="254.7" cy="1190.4" r="1.5" fill="#d4b06c" opacity="0.58"/><circle cx="1058.5" cy="58.0" r="1.5" fill="#d4b06c" opacity="0.52"/><circle cx="94.2" cy="609.4" r="2.2" fill="#d4b06c" opacity="0.61"/><circle cx="409.9" cy="1138.0" r="3.2" fill="#d4b06c" opacity="0.44"/><circle cx="826.3" cy="1452.8" r="1.5" fill="#d4b06c" opacity="0.42"/><circle cx="662.9" cy="369.5" r="2.2" fill="#d4b06c" opacity="0.44"/><circle cx="495.1" cy="1710.0" r="1.5" fill="#d4b06c" opacity="0.77"/><circle cx="187.8" cy="23.2" r="1.5" fill="#d4b06c" opacity="0.46"/><circle cx="1009.0" cy="996.6" r="3.2" fill="#d4b06c" opacity="0.68"/></svg>
+    <div class="bg-ghost" id="gancho-ghost" data-layout-allow-overflow data-layout-allow-occlusion>ENAMED</div>
+    <div class="bg-rule" id="gancho-rule" style="top:1490px"></div>
+  </div>
+  <div class="brand" id="gancho-brand"><svg class="marca" width="58" height="58" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#1b1e48"/>
+  <path d="M9 23 L20 12" stroke="#d4b06c" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M22.5 5.5 L23.6 8.4 L26.5 9.5 L23.6 10.6 L22.5 13.5 L21.4 10.6 L18.5 9.5 L21.4 8.4 Z" fill="#d4b06c"/>
+  <circle cx="11" cy="9" r="1" fill="#d4b06c" opacity=".7"/><circle cx="24" cy="21" r="1.2" fill="#d4b06c" opacity=".5"/>
+</svg><span class="brand-nome">Med<em>Trouxa</em></span></div>
+<div class="stage">
+        <div class="kick" id="gancho-kick"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4b06c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>ENAMED e Residência</div>
+        <div><span class="t g-line" id="gancho-l0">A prova chegando…</span><span class="t g-line" id="gancho-l1">…e você ainda</span><span class="t g-line" id="gancho-l2"><em>sem saber por onde começar?</em></span></div>
+        <div class="g-metro" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      </div>
+      <script>
+        const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#gancho-glow", { opacity: 0.35, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power2.out" }, 0);
+    (function () {
+      const g = document.getElementById("gancho-glow2"), st = document.getElementById("gancho-stars"), ph = { p: 0 };
+      tl.to(ph, { p: Math.PI * 2 * 1, duration: 3, ease: "none", onUpdate: function () {
+        const s = Math.sin(ph.p);
+        g.style.opacity = String(0.85 + s * 0.15);
+        g.style.transform = "scale(" + (1 + s * 0.04) + ")";
+        st.style.opacity = String(0.8 + Math.sin(ph.p * 1.7 + 1) * 0.2);
+      } }, 0);
+    })();
+    tl.fromTo("#gancho-ghost", { x: 0 }, { x: -120, duration: 3, ease: "none" }, 0);
+    tl.fromTo("#gancho-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power3.out" }, 0.15);
+    tl.fromTo("#gancho-brand", { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.05);
+      const PULSE = 0.5769, BEATS = [0.2, 0.2 + PULSE, 0.2 + PULSE * 2];
+      tl.fromTo("#gancho-kick", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 0.05);
+      tl.fromTo("#gancho-l0", { opacity: 0, scale: 1.35, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.5, ease: "power4.out" }, BEATS[0]);
+      tl.fromTo("#gancho-l1", { opacity: 0, x: -260 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, BEATS[1]);
+      tl.fromTo("#gancho-l2", { opacity: 0, y: 90, rotation: 4 }, { opacity: 1, y: 0, rotation: 0, duration: 0.55, ease: "circ.out" }, BEATS[2]);
+      document.querySelectorAll("#root .g-metro i").forEach(function (tick, i) {
+        tl.fromTo(tick, { opacity: 0.22 }, { opacity: 1, duration: 0.08, yoyo: true, repeat: 1, ease: "none" }, 0.2 + PULSE * i);
+      });
+        window.__timelines["gancho"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
