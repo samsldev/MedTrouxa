@@ -1,0 +1,55 @@
+[
+  {
+    "id": "aprendiz",
+    "name": "Aprendiz",
+    "tagline": "Para dominar a graduação, do ciclo básico ao internato.",
+    "cashPrice": 59990,
+    "installmentPrice": 5990,
+    "maxInstallments": 12,
+    "accessYears": 1,
+    "aiPerHour": 30,
+    "features": [
+      "Banco de questões comentadas com filtros por área, tema e banca",
+      "Flashcards com repetição espaçada",
+      "Simulados cronometrados com gabarito comentado",
+      "Coruja IA: tire dúvidas e gere flashcards",
+      "Painel de desempenho e ranking"
+    ]
+  },
+  {
+    "id": "alquimista",
+    "name": "Alquimista",
+    "badge": "Mais escolhido",
+    "tagline": "Preparação completa para ENAMED, residência e Revalida.",
+    "cashPrice": 79990,
+    "installmentPrice": 7990,
+    "maxInstallments": 12,
+    "accessYears": 1,
+    "aiPerHour": 90,
+    "features": [
+      "Tudo do Aprendiz, e mais:",
+      "Cronogramas guiados (ENAMED, Residência, Internato)",
+      "Provas de residência na íntegra",
+      "Mapa de provas: o que mais cai por banca",
+      "3x mais uso da Coruja IA",
+      "Comentários de aprofundamento"
+    ]
+  },
+  {
+    "id": "arcano",
+    "name": "Arcano",
+    "badge": "Melhor custo-benefício",
+    "tagline": "O Alquimista durante toda a faculdade, pago uma única vez.",
+    "cashPrice": 189990,
+    "installmentPrice": 18990,
+    "maxInstallments": 12,
+    "accessYears": 6,
+    "aiPerHour": 90,
+    "features": [
+      "Tudo do Alquimista, e mais:",
+      "6 anos de acesso garantido",
+      "Sem renovação anual",
+      "Todas as atualizações e novos materiais inclusos"
+    ]
+  }
+]

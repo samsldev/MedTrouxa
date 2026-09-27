@@ -4,10 +4,16 @@ import { api } from '../api/client';
 import { brl, Plan } from '../billing';
 import { spotlight } from '../hooks';
 import { Icon } from './Brand';
+import SNAPSHOT from '../plans.snapshot.json';
+import { retrying } from '../lib/retry';
 
+/**
+ * Catálogo de planos. Começa com a cópia embutida no site (aparece na hora, mesmo se a API estiver fora)
+ * e é atualizado pela API; se a chamada falhar, tenta de novo. A cópia é conferida contra o servidor em teste.
+ */
 export function usePlans() {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  useEffect(() => { api<Plan[]>('/billing/plans').then(setPlans).catch(() => setPlans([])); }, []);
+  const [plans, setPlans] = useState<Plan[]>(SNAPSHOT as Plan[]);
+  useEffect(() => retrying(() => api<Plan[]>('/billing/plans'), (p) => p.length && setPlans(p)), []);
   return plans;
 }
 

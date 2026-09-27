@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { Icon } from './Brand';
+import { retrying } from '../lib/retry';
 
 export interface Testimonial {
   id: number; name: string; school?: string; quote: string; specialty?: string; institutions?: string; highlight?: string;
@@ -12,10 +13,9 @@ export interface Stats { questions: number; flashcards: number; students: number
 export function useSocial() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [items, setItems] = useState<Testimonial[]>([]);
-  useEffect(() => {
-    api<Stats>('/public/stats').then(setStats).catch(() => undefined);
-    api<Testimonial[]>('/public/testimonials').then(setItems).catch(() => undefined);
-  }, []);
+  // Números e depoimentos reais vêm da API; se ela falhar, tenta de novo em vez de sumir com a seção
+  useEffect(() => retrying(() => api<Stats>('/public/stats'), setStats), []);
+  useEffect(() => retrying(() => api<Testimonial[]>('/public/testimonials'), setItems), []);
   return { stats, items };
 }
 
