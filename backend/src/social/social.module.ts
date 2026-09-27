@@ -3,7 +3,8 @@ import { InjectDataSource, InjectRepository, TypeOrmModule } from '@nestjs/typeo
 import { PartialType } from '@nestjs/mapped-types';
 import { IsBoolean, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min } from 'class-validator';
 import { DataSource, Repository } from 'typeorm';
-import { AdminOnly, Public } from '../common/auth';
+import { AdminOnly, CurrentUser, JwtUser, Public } from '../common/auth';
+import { AdminCoreModule, AuditService } from '../insights/admin-core';
 import { DEMO_APPROVED_NAMES, DEMO_STATS, demoEnabled } from '../database/demo';
 import { Testimonial } from '../database/entities';
 import { RedisService } from '../redis/redis.module';
@@ -32,6 +33,7 @@ class SocialController {
     @InjectRepository(Testimonial) private testimonials: Repository<Testimonial>,
     @InjectDataSource() private db: DataSource,
     private redis: RedisService,
+    private audit: AuditService,
   ) {}
 
   /** Números da plataforma para a prova social (reais; fictícios apenas no modo de teste) */
@@ -61,14 +63,16 @@ class SocialController {
   all() { return this.testimonials.find({ where: { isDemo: false }, order: { createdAt: 'DESC' } }); }
 
   @AdminOnly() @Post('testimonials')
-  async create(@Body() dto: TestimonialDto) {
+  async create(@CurrentUser() admin: JwtUser, @Body() dto: TestimonialDto) {
     const t = await this.testimonials.save(this.testimonials.create(dto));
+    await this.audit.record(admin, 'content.testimonial_create', null, { id: t.id, name: t.name });
     await this.redis.invalidate(...CACHE_KEYS);
     return t;
   }
 
   @AdminOnly() @Patch('testimonials/:id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTestimonialDto) {
+  async update(@CurrentUser() admin: JwtUser, @Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTestimonialDto) {
+    await this.audit.record(admin, 'content.testimonial_update', null, { id });
     const t = await this.testimonials.findOneBy({ id });
     if (!t) throw new NotFoundException();
     Object.assign(t, dto);
@@ -78,12 +82,13 @@ class SocialController {
   }
 
   @AdminOnly() @Delete('testimonials/:id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@CurrentUser() admin: JwtUser, @Param('id', ParseIntPipe) id: number) {
     await this.testimonials.delete(id);
+    await this.audit.record(admin, 'content.testimonial_delete', null, { id });
     await this.redis.invalidate(...CACHE_KEYS);
     return { ok: true };
   }
 }
 
-@Module({ imports: [TypeOrmModule.forFeature([Testimonial])], controllers: [SocialController] })
+@Module({ imports: [TypeOrmModule.forFeature([Testimonial]), AdminCoreModule], controllers: [SocialController] })
 export class SocialModule {}

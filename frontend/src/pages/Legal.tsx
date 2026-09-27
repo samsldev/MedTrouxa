@@ -30,7 +30,7 @@ const DOCS = {
       ['6. Retenção', 'Mantemos seus dados enquanto a conta existir. Ao excluir a conta, apagamos perfil e histórico de estudos; registros de pagamento são mantidos, sem vínculo com seus dados pessoais, pelo prazo exigido pela legislação fiscal.'],
       ['7. Seus direitos', 'Em "Minha conta" você pode corrigir seus dados, baixar uma cópia de todos eles (portabilidade), encerrar sessões em todos os dispositivos e excluir a conta. Outros pedidos (LGPD, art. 18) podem ser feitos pelo contato acima.'],
       ['8. Segurança', 'Tráfego criptografado (HTTPS/HSTS), senhas com bcrypt, sessões com tokens de curta duração e cookies httpOnly, limites contra força bruta, banco de dados em rede isolada com réplicas e backups diários criptografados.'],
-      ['9. Cookies', 'Usamos apenas um cookie essencial de sessão (httpOnly, restrito à autenticação). Não usamos cookies de rastreamento ou publicidade.'],
+      ['9. Cookies e análise', 'Usamos um cookie essencial de sessão (httpOnly, restrito à autenticação). Nas páginas públicas medimos visitas, rolagem e cliques com um rastreador próprio (sem terceiros e sem publicidade): sem o seu consentimento os dados são totalmente anônimos; com ele, suas visitas são ligadas por um identificador aleatório guardado no seu navegador. Endereço IP e user-agent nunca são armazenados. Você pode mudar sua escolha a qualquer momento em "Preferências de cookies", no rodapé.'],
     ],
   },
 };

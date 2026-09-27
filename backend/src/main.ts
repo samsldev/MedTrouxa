@@ -19,6 +19,8 @@ async function bootstrap() {
   app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1)); // IP real atrás do nginx/load balancer
   app.disable('x-powered-by');
   app.useBodyParser('json', { limit: '200kb' });
+  // Beacons do rastreador chegam como text/plain (sendBeacon não permite outro tipo sem preflight)
+  app.useBodyParser('text', { limit: '16kb', type: 'text/plain' });
   app.use(helmet({
     contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } }, // API só devolve JSON
     crossOriginResourcePolicy: { policy: 'same-site' },

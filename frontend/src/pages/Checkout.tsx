@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, formatTaxId } from '../api/client';
+import { attribution } from '../lib/analytics';
 import { brl, installmentTotal, totalFor } from '../billing';
 import { Icon, Logo } from '../components/Brand';
 import { usePlans } from '../components/Pricing';
@@ -31,7 +32,7 @@ export default function Checkout() {
     setBusy(true); setError('');
     try {
       if (taxId) await api('/billing/fiscal-identity', { method: 'PUT', body: { doc_type: taxType, doc_number: taxId } });
-      const r = await api<{ subscriptionId: string; status: string; redirectUrl: string | null }>('/billing/checkout', { body: { planId: plan!.id, paymentMethod: method, installments } });
+      const r = await api<{ subscriptionId: string; status: string; redirectUrl: string | null }>('/billing/checkout', { body: { planId: plan!.id, paymentMethod: method, installments, ...attribution() } });
       if (r.redirectUrl && /^https:\/\/([a-z0-9-]+\.)*mercadopago\.com(\.br)?\//.test(r.redirectUrl)) { window.location.assign(r.redirectUrl); return; }
       nav(`/pagamento/${r.subscriptionId}`);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }

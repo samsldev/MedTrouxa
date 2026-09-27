@@ -119,6 +119,22 @@ Conformidade testada: o port gera o **mesmo documento, byte a byte**, que o emis
 
 Detalhes de segurança e LGPD: [SECURITY.md](SECURITY.md).
 
+### Console administrativo (`/admin`)
+
+Port do console do `faelith_web`, adaptado ao MedTrouxa. Exige conta admin **com 2FA por app** em produção (`ADMIN_REQUIRE_TOTP`); para não-admins as rotas respondem 404.
+
+| Aba | O que mostra |
+|---|---|
+| Visão geral | **MRR** (plano anual ÷ 12, sem cortesias), **ARR** (MRR × 12), crescimento do MRR, ARPA, receita líquida de reembolsos, gráfico de MRR e receita diária, funil visita → cadastro → e-mail → checkout → assinatura, DAU/WAU/MAU e aderência |
+| Marketing | visualizações, visitantes, sessões, tempo ativo, rolagem, rejeição, cliques (com variação vs período anterior); páginas, landings (`?lp=`), UTMs, origens, dispositivos, idiomas; intenção de assinatura por plano/página; filtros de período e segmento |
+| Mapas de calor | prévia ao vivo da página com camadas de cliques, atenção e rolagem, e elementos mais clicados |
+| Visitantes | visitantes que consentiram e a jornada completa (sessões, páginas, cliques, origem) |
+| Assinaturas | planos ativos, **lucro real** (taxas do gateway, impostos por regime, custos fixos: `ADMIN_TAX_*`, `ADMIN_FEE_*`, `ADMIN_MONTHLY_COST_BRL`), janela de arrependimento de 7 dias, funis de checkout por plano/pagamento/parcelas/fonte/landing, atribuição de receita, perfil dos pagantes |
+| Suporte | busca de contas; conceder cortesia, encerrar assinatura, suspender/reativar, remover 2FA, confirmar e-mail. Tudo pede senha + código do app e fica na **Auditoria** |
+| Notas fiscais · Conteúdo · Auditoria | NFS-e, questões/depoimentos e o registro das ações administrativas |
+
+A coleta (`POST /api/t`) só acontece nas páginas públicas e **só depois do consentimento** do banner de cookies (LGPD); sem consentimento, só uma visualização anônima entra no total. O checkout grava UTM/landing da primeira visita para a atribuição de receita.
+
 ### Plano gratuito × pagos
 
 | Recurso | Gratuito | Aprendiz | Alquimista / Arcano |

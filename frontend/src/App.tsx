@@ -1,6 +1,8 @@
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Icon, Logo } from './components/Brand';
+import ConsentBanner from './components/ConsentBanner';
+import { inPreview, usePageTracking } from './lib/analytics';
 import Account from './pages/Account';
 import Admin from './pages/Admin';
 import Checkout from './pages/Checkout';
@@ -70,11 +72,14 @@ function AdminRoute() {
 function Home() {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/inicio" replace /> : <Landing />;
+  return user && !inPreview() ? <Navigate to="/inicio" replace /> : <Landing />;
 }
 
 export default function App() {
+  usePageTracking();
   return (
+    <>
+    <ConsentBanner />
     <Routes>
       <Route index element={<Home />} />
       <Route path="/login" element={<Login />} />
@@ -102,5 +107,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
+    </>
   );
 }

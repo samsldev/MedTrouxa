@@ -3,7 +3,7 @@ import {
   Param, ParseUUIDPipe, Post, Query, ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
-import { IsIn, IsInt, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { MoreThan, Repository } from 'typeorm';
 import { CurrentUser, JwtUser, Public } from '../common/auth';
 import { appUrl, isProd } from '../config/env';
@@ -19,6 +19,11 @@ class CheckoutDto {
   @IsString() planId: string;
   @IsIn(['pix', 'card']) paymentMethod: 'pix' | 'card';
   @IsInt() @Min(1) @Max(12) installments: number;
+  /** Atribuição de marketing (UTM e variação de landing) capturada pelo rastreador */
+  @IsOptional() @IsString() @MaxLength(100) utmSource?: string;
+  @IsOptional() @IsString() @MaxLength(100) utmMedium?: string;
+  @IsOptional() @IsString() @MaxLength(100) utmCampaign?: string;
+  @IsOptional() @IsString() @MaxLength(60) lp?: string;
 }
 
 const provider = () => (process.env.PAYMENT_PROVIDER ?? 'fake') as 'fake' | 'mercadopago';
@@ -91,6 +96,7 @@ export class BillingService {
     const sub = await this.subs.save(this.subs.create({
       userId: u.sub, planId: plan.id, paymentMethod: dto.paymentMethod, installments: dto.installments, amount,
       status: 'pending', provider: provider(),
+      utmSource: dto.utmSource ?? null, utmMedium: dto.utmMedium ?? null, utmCampaign: dto.utmCampaign ?? null, lp: dto.lp ?? null,
     }));
 
     if (provider() === 'fake') {
@@ -167,6 +173,7 @@ export class BillingService {
         : 'Reembolso ao cliente (direito de arrependimento ou estorno)');
       if (sub.status !== 'active') return;
       sub.status = 'canceled';
+      sub.canceledAt = new Date();
       await this.subs.save(sub);
       securityEvent('billing.revoked', { sub: sub.id, reason: pay.status });
     }

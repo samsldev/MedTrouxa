@@ -34,6 +34,13 @@ Para reportar uma vulnerabilidade, escreva para o contato de suporte da platafor
   uso de código de recuperação disparam **e-mail de alerta**.
 - Com TOTP ativo, não é possível trocar para código por e-mail na hora do login (evita rebaixar a proteção).
 
+## Console administrativo
+
+- Rotas `/api/admin/*` respondem **404** para quem não é admin (não revelam que existem) e exigem sessão com 2FA por app em produção (`ADMIN_REQUIRE_TOTP`).
+- Ações de suporte e fiscais exigem **reautenticação** (senha + TOTP ou código de recuperação), motivo obrigatório, rate limit por admin e são gravadas em `admin_audit` (append-only).
+- Suspender uma conta ou remover o 2FA derruba todas as sessões do usuário.
+- CSP `frame-ancestors 'self'` / `X-Frame-Options: SAMEORIGIN`: apenas o próprio site pode embutir suas páginas (prévia do mapa de calor).
+
 ## LGPD e proteção de dados
 
 - **Consentimento**: aceite dos Termos e da Política no cadastro, com data e versão registradas.
@@ -41,6 +48,8 @@ Para reportar uma vulnerabilidade, escreva para o contato de suporte da platafor
 - **Minimização**: ranking mostra só primeiro nome + inicial; a IA recebe apenas o texto da pergunta; logs mascaram e-mails; dados de cartão nunca passam pelo servidor (Mercado Pago).
 - **Segurança da informação**: banco e cache em rede Docker `internal` (sem internet e sem portas publicadas), Redis com senha e comandos perigosos desabilitados, 3 nós Postgres com replicação e failover, backup diário criptografado com retenção.
 - **Cookies**: somente o cookie essencial de sessão.
+
+- Analytics próprio (sem terceiros): nada é coletado antes do consentimento; sem consentimento só entra uma visualização anônima sem identificador. Não há IP nem user-agent guardados; a jornada só existe para quem aceitou e pode ser revogada em “Preferências de cookies”.
 
 ## Operação
 

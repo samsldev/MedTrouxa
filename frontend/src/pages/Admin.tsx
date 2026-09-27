@@ -1,105 +1,66 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { api, Subject } from '../api/client';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { ApiError } from '../api/client';
 import AdminNfse from '../components/AdminNfse';
-import { Testimonial } from '../components/SocialProof';
+import { get } from '../components/admin/common';
 
-const emptyQ = { statement: '', A: '', B: '', C: '', D: '', E: '', correctKey: 'A', commentary: '', topicId: '', institution: '', year: '', difficulty: 'medium' };
-const emptyT = { name: '', school: '', quote: '', specialty: '', institutions: '', highlight: '', photoUrl: '', videoUrl: '', featured: false, approved: true };
+const Overview = lazy(() => import('../components/admin/Overview'));
+const Marketing = lazy(() => import('../components/admin/Marketing'));
+const Heatmap = lazy(() => import('../components/admin/Heatmap'));
+const Visitors = lazy(() => import('../components/admin/Visitors'));
+const Subscriptions = lazy(() => import('../components/admin/Subscriptions'));
+const Support = lazy(() => import('../components/admin/Support'));
+const Audit = lazy(() => import('../components/admin/Audit'));
+const Content = lazy(() => import('../components/admin/Content'));
 
+const TABS = [
+  ['overview', 'Visão geral'], ['marketing', 'Marketing'], ['heatmap', 'Mapas de calor'], ['visitors', 'Visitantes'],
+  ['subscriptions', 'Assinaturas'], ['support', 'Suporte'], ['nfse', 'Notas fiscais'], ['content', 'Conteúdo'], ['audit', 'Auditoria'],
+] as const;
+type Tab = (typeof TABS)[number][0];
+const readTab = (): Tab => { const h = location.hash.slice(1); return (TABS.find(([k]) => k === h)?.[0] ?? 'overview'); };
+
+/** Console administrativo (port do console do faelith_web, adaptado ao MedTrouxa). */
 export default function Admin() {
-  const [tab, setTab] = useState<'q' | 't' | 'n'>('q');
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [q, setQ] = useState(emptyQ);
-  const [t, setT] = useState(emptyT);
-  const [list, setList] = useState<Testimonial[]>([]);
-  const [msg, setMsg] = useState('');
+  const [tab, setTabState] = useState<Tab>(readTab);
+  const [heatPath, setHeatPath] = useState<string | undefined>();
+  const [gate, setGate] = useState<'loading' | 'ok' | 'totp' | 'denied'>('loading');
+  const setTab = (t: Tab) => { setTabState(t); history.replaceState(null, '', `#${t}`); };
 
-  useEffect(() => { api<Subject[]>('/subjects').then(setSubjects); }, []);
-  const loadT = () => api<Testimonial[]>('/public/testimonials/all').then(setList);
-  useEffect(() => { if (tab === 't') loadT(); }, [tab]);
+  useEffect(() => {
+    const onHash = () => setTabState(readTab());
+    addEventListener('hashchange', onHash);
+    return () => removeEventListener('hashchange', onHash);
+  }, []);
 
-  async function saveQ(e: FormEvent) {
-    e.preventDefault(); setMsg('');
-    const alternatives = (['A', 'B', 'C', 'D', 'E'] as const).filter((k) => q[k].trim()).map((k) => ({ key: k, text: q[k].trim() }));
-    try {
-      await api('/questions', { body: {
-        statement: q.statement, alternatives, correctKey: q.correctKey, commentary: q.commentary, topicId: Number(q.topicId),
-        institution: q.institution || undefined, year: q.year ? Number(q.year) : undefined, difficulty: q.difficulty,
-      } });
-      setQ({ ...emptyQ, topicId: q.topicId, institution: q.institution, year: q.year }); setMsg('Questão cadastrada.');
-    } catch (err) { setMsg((err as Error).message); }
-  }
+  useEffect(() => {
+    get('/admin/me').then(() => setGate('ok')).catch((e) => setGate(e instanceof ApiError && e.code === 'ADMIN_TOTP_REQUIRED' ? 'totp' : 'denied'));
+  }, []);
 
-  async function saveT(e: FormEvent) {
-    e.preventDefault(); setMsg('');
-    const body = Object.fromEntries(Object.entries(t).filter(([, v]) => v !== ''));
-    try { await api('/public/testimonials', { body }); setT(emptyT); setMsg('Depoimento publicado.'); loadT(); }
-    catch (err) { setMsg((err as Error).message); }
-  }
-
-  const set = <T extends object>(obj: T, fn: (v: T) => void) => (k: keyof T) => (e: { target: { value: string } }) => fn({ ...obj, [k]: e.target.value });
-  const sq = set(q, setQ); const st = set(t, setT);
+  if (gate === 'loading') return <p className="c-note">Carregando…</p>;
+  if (gate !== 'ok') return (
+    <div className="card stack">
+      <h2>{gate === 'totp' ? 'Ative o 2FA por aplicativo' : 'Acesso negado'}</h2>
+      <p className="muted">{gate === 'totp' ? 'O console administrativo exige login com app autenticador. Ative em Conta → Segurança e entre de novo.' : 'Sua conta não tem acesso ao console.'}</p>
+    </div>
+  );
 
   return (
-    <>
-      <div className="page-head"><span className="kicker">Administração</span><h1>Painel <em>admin</em></h1></div>
-      <div className="tabs-inline">
-        <button className={tab === 'q' ? 'on' : ''} onClick={() => setTab('q')}>Questões</button>
-        <button className={tab === 't' ? 'on' : ''} onClick={() => setTab('t')}>Depoimentos</button>
-        <button className={tab === 'n' ? 'on' : ''} onClick={() => setTab('n')}>Notas fiscais</button>
-      </div>
-      {msg && <div className="notice">{msg}</div>}
-
-      {tab === 'n' ? <AdminNfse /> : tab === 'q' ? (
-        <form className="card stack" onSubmit={saveQ}>
-          <h3>Nova questão</h3>
-          <div className="row">
-            <label>Tema<select value={q.topicId} onChange={sq('topicId')} required>
-              <option value="">Selecione</option>
-              {subjects.map((s) => <optgroup key={s.id} label={s.name}>{s.topics.map((tp) => <option key={tp.id} value={tp.id}>{tp.name}</option>)}</optgroup>)}
-            </select></label>
-            <label>Banca<input value={q.institution} onChange={sq('institution')} maxLength={80} /></label>
-            <label className="narrow">Ano<input type="number" min={1900} max={2100} value={q.year} onChange={sq('year')} /></label>
-            <label className="narrow">Dificuldade<select value={q.difficulty} onChange={sq('difficulty')}><option value="easy">Fácil</option><option value="medium">Média</option><option value="hard">Difícil</option></select></label>
-          </div>
-          <label>Enunciado<textarea rows={5} value={q.statement} onChange={sq('statement')} required minLength={10} /></label>
-          {(['A', 'B', 'C', 'D', 'E'] as const).map((k) => (
-            <label key={k}>Alternativa {k}{k < 'C' ? ' *' : ''}<input value={q[k]} onChange={sq(k)} required={k < 'C'} /></label>
-          ))}
-          <div className="row">
-            <label className="narrow">Gabarito<select value={q.correctKey} onChange={sq('correctKey')}>{['A', 'B', 'C', 'D', 'E'].map((k) => <option key={k}>{k}</option>)}</select></label>
-          </div>
-          <label>Comentário<textarea rows={4} value={q.commentary} onChange={sq('commentary')} required /></label>
-          <button className="btn btn-dark">Cadastrar questão</button>
-        </form>
-      ) : (
-        <div className="grid2">
-          <form className="card stack" onSubmit={saveT}>
-            <h3>Novo depoimento</h3>
-            <p className="fine">Publique apenas depoimentos reais, com autorização de uso de nome e imagem.</p>
-            <div className="row"><label>Nome<input value={t.name} onChange={st('name')} required /></label><label>Faculdade<input value={t.school} onChange={st('school')} /></label></div>
-            <label>Depoimento<textarea rows={4} value={t.quote} onChange={st('quote')} required maxLength={600} /></label>
-            <div className="row"><label>Especialidade<input value={t.specialty} onChange={st('specialty')} /></label><label>Instituições<input value={t.institutions} onChange={st('institutions')} /></label></div>
-            <label>Destaque (ex.: 93 pontos no ENAMED)<input value={t.highlight} onChange={st('highlight')} /></label>
-            <div className="row"><label>URL da foto (https)<input type="url" value={t.photoUrl} onChange={st('photoUrl')} /></label><label>URL do vídeo (https)<input type="url" value={t.videoUrl} onChange={st('videoUrl')} /></label></div>
-            <label className="check"><input type="checkbox" checked={t.featured} onChange={(e) => setT({ ...t, featured: e.target.checked })} /><span>Destaque (cards grandes)</span></label>
-            <label className="check"><input type="checkbox" checked={t.approved} onChange={(e) => setT({ ...t, approved: e.target.checked })} /><span>Conta como aprovado(a) no mural</span></label>
-            <button className="btn btn-dark">Publicar</button>
-          </form>
-          <div className="card">
-            <h3>Publicados ({list.length})</h3>
-            {list.length === 0 && <p className="muted">Nenhum depoimento real ainda.</p>}
-            <ul className="admin-list">
-              {list.map((x) => (
-                <li key={x.id}>
-                  <div><b>{x.name}</b><small>{x.school}{x.videoUrl ? ' · vídeo' : ''}{x.featured ? ' · destaque' : ''}</small></div>
-                  <button className="btn btn-text" onClick={async () => { if (confirm(`Remover o depoimento de ${x.name}?`)) { await api(`/public/testimonials/${x.id}`, { method: 'DELETE' }); loadT(); } }}>Remover</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-    </>
+    <div className="console">
+      <div className="page-head"><span className="kicker">Administração</span><h1>Console <em>MedTrouxa</em></h1></div>
+      <nav className="tabs-inline c-tabs" aria-label="Seções do console">
+        {TABS.map(([k, label]) => <button key={k} className={tab === k ? 'on' : ''} aria-current={tab === k ? 'page' : undefined} onClick={() => setTab(k)}>{label}</button>)}
+      </nav>
+      <Suspense fallback={<p className="c-note">Carregando…</p>}>
+        {tab === 'overview' && <Overview />}
+        {tab === 'marketing' && <Marketing openHeatmap={(p) => { setHeatPath(p); setTab('heatmap'); }} />}
+        {tab === 'heatmap' && <Heatmap key={heatPath} initialPath={heatPath} />}
+        {tab === 'visitors' && <Visitors />}
+        {tab === 'subscriptions' && <Subscriptions />}
+        {tab === 'support' && <Support />}
+        {tab === 'nfse' && <AdminNfse />}
+        {tab === 'content' && <Content />}
+        {tab === 'audit' && <Audit />}
+      </Suspense>
+    </div>
   );
 }

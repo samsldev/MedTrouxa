@@ -28,6 +28,9 @@ export class User {
   /** Aceite dos Termos de uso e Política de privacidade (LGPD art. 8º) */
   @Column({ type: 'timestamptz', nullable: true }) termsAcceptedAt?: Date | null;
   @Column({ nullable: true }) termsVersion?: string;
+  /** Conta suspensa pelo suporte (bloqueia login e sessões) */
+  @Column({ type: 'timestamptz', nullable: true }) suspendedAt?: Date | null;
+  @Column({ type: 'text', nullable: true }) suspendReason?: string | null;
   @CreateDateColumn() createdAt: Date;
 }
 
@@ -169,6 +172,14 @@ export class Subscription {
   @Column({ type: 'timestamptz', nullable: true }) paidAt?: Date | null;
   @Column({ type: 'timestamptz', nullable: true }) startsAt?: Date | null;
   @Column({ type: 'timestamptz', nullable: true }) expiresAt?: Date | null;
+  @Column({ type: 'timestamptz', nullable: true }) canceledAt?: Date | null;
+  /** E-mail do admin quando o plano foi concedido manualmente (cortesia, sem cobrança) */
+  @Column({ type: 'text', nullable: true }) grantedBy?: string | null;
+  /** Atribuição de marketing do checkout (UTM e variação de landing) */
+  @Column({ type: 'text', nullable: true }) utmSource?: string | null;
+  @Column({ type: 'text', nullable: true }) utmMedium?: string | null;
+  @Column({ type: 'text', nullable: true }) utmCampaign?: string | null;
+  @Column({ type: 'text', nullable: true }) lp?: string | null;
 }
 
 /** Depoimento/aprovação de aluno. Gerenciado pelo admin; `isDemo` marca conteúdo de exemplo (nunca em produção). */

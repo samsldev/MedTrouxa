@@ -13,6 +13,7 @@ import { dataSourceOptions } from './database/data-source';
 import { ExamsModule } from './exams/exams.module';
 import { FlashcardsModule } from './flashcards/flashcards.module';
 import { NfseModule } from './nfse/nfse.module';
+import { InsightsModule } from './insights/insights.module';
 import { QuestionsModule } from './questions/questions.module';
 import { RedisModule, RedisService } from './redis/redis.module';
 import { AccessLogInterceptor } from './security/logging';
@@ -41,7 +42,7 @@ class HealthController {
     TypeOrmModule.forRootAsync({ useFactory: dataSourceOptions }),
     JwtModule.registerAsync({ global: true, useFactory: () => ({ secret: process.env.JWT_SECRET, signOptions: { algorithm: 'HS256' } }) }),
     RedisModule, AuthModule, AccountModule, SubjectsModule, QuestionsModule, FlashcardsModule, ExamsModule, StudyPlansModule,
-    StatsModule, AiModule, BillingModule, SocialModule, NfseModule,
+    StatsModule, AiModule, BillingModule, SocialModule, NfseModule, InsightsModule,
   ],
   controllers: [HealthController],
   providers: [

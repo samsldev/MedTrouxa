@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { resetConsent } from '../lib/analytics';
 import { SITE } from '../site';
 import { Icon, Logo } from './Brand';
 
@@ -53,6 +54,7 @@ export default function Footer() {
             {SITE.cnpj && <>CNPJ {SITE.cnpj} · </>}
             © {new Date().getFullYear()} {SITE.name} · Conteúdo educacional; não substitui avaliação médica.
           </small>
+          <button className="to-top" onClick={resetConsent} style={{ minWidth: 0 }}>Preferências de cookies</button>
           <button className="to-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Voltar ao topo <span aria-hidden="true">↑</span></button>
         </div>
       </div>

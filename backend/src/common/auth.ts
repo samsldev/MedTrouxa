@@ -1,11 +1,12 @@
 import {
-  CanActivate, createParamDecorator, ExecutionContext, ForbiddenException, Injectable, SetMetadata, UnauthorizedException,
+  CanActivate, createParamDecorator, ExecutionContext, ForbiddenException, Injectable, NotFoundException, SetMetadata, UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { isProd } from '../config/env';
 import { RedisService } from '../redis/redis.module';
 
-export interface JwtUser { sub: string; email: string; role: 'student' | 'admin'; name: string; tv: number }
+export interface JwtUser { sub: string; email: string; role: 'student' | 'admin'; name: string; tv: number; mfa?: 'totp' | 'email' | null }
 
 export const Public = () => SetMetadata('public', true);
 export const AdminOnly = () => SetMetadata('admin', true);
@@ -33,7 +34,14 @@ export class JwtGuard implements CanActivate {
     const current = await this.redis.client.get(`tv:${user.sub}`).catch(() => null);
     if (current !== null && Number(current) !== user.tv) throw new UnauthorizedException('Sessão encerrada');
     req.user = user;
-    if (this.reflector.getAllAndOverride<boolean>('admin', targets) && user.role !== 'admin') throw new ForbiddenException();
+    if (this.reflector.getAllAndOverride<boolean>('admin', targets)) {
+      // Quem não é admin recebe 404: a existência do console não é revelada
+      if (user.role !== 'admin') throw new NotFoundException();
+      const requireTotp = (process.env.ADMIN_REQUIRE_TOTP ?? (isProd() ? 'true' : 'false')) === 'true';
+      if (requireTotp && user.mfa !== 'totp') {
+        throw new ForbiddenException({ code: 'ADMIN_TOTP_REQUIRED', message: 'Ative a verificação em duas etapas por app autenticador para acessar o console.' });
+      }
+    }
     return true;
   }
 }

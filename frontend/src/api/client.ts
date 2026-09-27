@@ -11,6 +11,7 @@ let onSessionLost: (() => void) | null = null;
 export const session = {
   set: (t: string | null) => { accessToken = t; },
   has: () => !!accessToken,
+  token: () => accessToken,
   onLost: (fn: () => void) => { onSessionLost = fn; },
 };
 

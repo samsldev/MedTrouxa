@@ -60,9 +60,10 @@ export class AuthService {
 
   /** Emite access token (curto) + refresh token opaco (guardado como hash no Redis, rotacionado a cada uso). */
   async issue(user: User, res: Response) {
-    const full = await this.users.findOne({ where: { id: user.id }, select: ['id', 'tokenVersion'] });
+    const full = await this.users.findOne({ where: { id: user.id }, select: ['id', 'tokenVersion', 'twoFactorMethod', 'suspendedAt'] });
+    if (full?.suspendedAt) throw new ForbiddenException('Conta suspensa. Fale com o suporte.');
     const tv = full?.tokenVersion ?? 0;
-    const payload: JwtUser = { sub: user.id, email: user.email, role: user.role, name: user.name, tv };
+    const payload: JwtUser = { sub: user.id, email: user.email, role: user.role, name: user.name, tv, mfa: full?.twoFactorMethod ?? null };
     const rt = randomBytes(32).toString('base64url');
     await this.redis.client.set(`rt:${sha256(rt)}`, JSON.stringify({ uid: user.id, tv }), 'EX', REFRESH_TTL_SEC);
     res.cookie(RT_COOKIE, rt, this.cookieOptions());

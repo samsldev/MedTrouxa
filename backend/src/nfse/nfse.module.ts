@@ -9,23 +9,22 @@
  * - O comprador recebe e-mail quando a nota é emitida (com PDF e XML anexados) e quando falta CPF / CNPJ
  */
 import {
-  BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Injectable, Logger, Module, NotFoundException,
+  BadRequestException, Body, ConflictException, Controller, Get, Injectable, Logger, Module, NotFoundException,
   OnApplicationShutdown, OnModuleInit, Param, ParseUUIDPipe, Post, Put, Query, Res, ServiceUnavailableException, BadGatewayException,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { InjectDataSource, InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
+import { InjectDataSource, TypeOrmModule } from '@nestjs/typeorm';
 import { IsIn, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 import type { Response } from 'express';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { AdminOnly, CurrentUser, JwtUser } from '../common/auth';
 import { appUrl, isProd } from '../config/env';
 import { User } from '../database/entities';
 import { securityEvent } from '../security/logging';
 import { MailService } from '../security/mail';
-import { verifyPassword } from '../security/password';
 import { RateLimit } from '../security/rate-limit';
-import { MfaMethod, TwoFactorService } from '../security/twofactor';
+import { AdminCoreModule, AuditService, ReauthService } from '../insights/admin-core';
+import { MfaMethod } from '../security/twofactor';
 import { LiveGateway } from './client';
 import { nfseConfigFromEnv } from './config';
 import { digits, validCnpj, validCpf } from './dps';
@@ -171,7 +170,7 @@ class AdminActionDto {
 
 @Controller()
 class NfseController {
-  constructor(private engine: NfseEngine, @InjectRepository(User) private users: Repository<User>, private twoFactor: TwoFactorService) {}
+  constructor(private engine: NfseEngine, private reauth: ReauthService, private audit: AuditService) {}
 
   /** Serve o XML da NFS-e ou o PDF do DANFSe de um documento. */
   private async download(doc: NfseDocument, kind: string, res: Response) {
@@ -246,13 +245,7 @@ class NfseController {
   @AdminOnly() @Post('admin/nfse/:id/:action') @RateLimit({ limit: 20, windowSec: 600, key: 'user' })
   async adminAction(@CurrentUser() admin: JwtUser, @Param('id', ParseUUIDPipe) id: string, @Param('action') action: string, @Body() body: AdminActionDto) {
     if (action !== 'retry' && action !== 'cancel') throw new NotFoundException();
-    const me = await this.users.findOne({ where: { id: admin.sub }, select: ['id', 'passwordHash', 'twoFactorMethod'] });
-    if (!me || !(await verifyPassword(body.password, me.passwordHash))) throw new UnauthorizedException('Reautenticação necessária: senha incorreta');
-    if (me.twoFactorMethod === 'totp' || body.method === 'recovery') {
-      if (!body.method || !body.code || !(await this.twoFactor.verify(admin.sub, body.method, body.code))) {
-        throw new UnauthorizedException('Reautenticação necessária: informe o código do seu app autenticador');
-      }
-    }
+    await this.reauth.require(admin, body);
     const doc = await this.engine.store.get(id);
     if (!doc) throw new NotFoundException();
     let next: string;
@@ -269,14 +262,14 @@ class NfseController {
     doc.attempts = 0;
     doc.nextAttemptAt = new Date();
     await this.engine.store.save(doc);
-    securityEvent(`admin.nfse.${action}`, { admin: admin.sub, document: doc.id, source: doc.sourceId, reason: doc.cancelReason });
+    await this.audit.record(admin, `nfse.${action}`, doc.userId, { document: doc.id, number: doc.nfseNumber, source: doc.sourceId, reason: doc.cancelReason });
     void this.engine.tick();
     return { status: doc.status };
   }
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), AuthModule],
+  imports: [TypeOrmModule.forFeature([User]), AuthModule, AdminCoreModule],
   controllers: [NfseController],
   providers: [NfseEngine],
   exports: [NfseEngine],

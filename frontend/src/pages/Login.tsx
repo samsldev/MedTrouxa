@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { inPreview } from '../lib/analytics';
 import { AuthStep, useAuth } from '../auth';
 import VerifyStep from '../components/VerifyStep';
 import { Icon, Logo, Stars } from '../components/Brand';
@@ -15,7 +16,7 @@ export default function Login() {
   const onStep = (s: AuthStep) => setStep(s.status === 'ok' ? null : s);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  if (user) return <Navigate to={next.startsWith('/') ? next : '/inicio'} replace />;
+  if (user && !inPreview()) return <Navigate to={next.startsWith('/') ? next : '/inicio'} replace />;
 
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
 
