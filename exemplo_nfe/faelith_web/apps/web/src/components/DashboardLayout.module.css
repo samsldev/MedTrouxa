@@ -1,0 +1,273 @@
+/**
+ * @fileoverview Dashboard chrome styles: sidebar, iconized nav, user block, and top bar.
+ * @author Samuel S. L.
+ * @version 2.0.0
+ * @since 2026-09-06
+ * @copyright (c) 2026 Samuel S. L. All rights reserved.
+ * All information contained herein is, and remains, the property of
+ * Samuel S. L. and its suppliers, if any.
+ *
+ * The intellectual, technical, creative, and software concepts contained
+ * herein are proprietary to Samuel S. L. and its suppliers and
+ * are protected by copyright law, trade secret law, and other applicable
+ * intellectual property laws in the Netherlands, the European Union, and
+ * other foreign jurisdictions.
+ *
+ * Where applicable, such rights may be registered, recorded, or protected
+ * with the competent authorities of the Government of the Netherlands,
+ * the European Union, and/or other relevant jurisdictions.
+ *
+ * Dissemination of this information, reproduction of this material,
+ * modification, distribution, disclosure, or commercial use is strictly
+ * forbidden unless prior written permission is obtained from
+ * Samuel S. L.
+ *
+ * @commercialUse Commercial use permitted only with prior written permission from Samuel S. L.
+ *
+ * DETAILED_DESCRIPTION:
+ * - Fixed 248px sidebar with a subtle elevated background
+ * - Active nav item gets a gold left indicator and stronger surface
+ * - Sticky top bar with breadcrumb and back link
+ * - Mobile: sidebar becomes a horizontal bar and the user block hides
+ */
+
+.frame {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 248px 1fr;
+}
+
+.side {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border-right: 1px solid var(--border);
+  padding: 22px 14px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  font-size: 17px;
+  padding: 4px 8px;
+  margin-bottom: 26px;
+}
+
+.mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #e85d74, var(--accent));
+  transform: rotate(45deg);
+  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.4);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--fg-2);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    color 0.2s var(--ease-out),
+    background 0.2s var(--ease-out);
+}
+
+.nav a svg {
+  color: var(--muted);
+  transition: color 0.2s var(--ease-out);
+}
+
+.nav a:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav a:hover svg {
+  color: var(--fg);
+}
+
+.active {
+  color: var(--fg) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.active svg {
+  color: var(--accent) !important;
+}
+
+.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 25%;
+  height: 50%;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.user {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.avatar {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(135deg, #e85d74, var(--accent-deep));
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.userName {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userPlan {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 36px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(14px);
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.crumbMuted,
+.crumbSep {
+  color: var(--muted);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  transition: color 0.2s var(--ease-out);
+}
+
+.backLink:hover {
+  color: var(--fg);
+}
+
+.inner {
+  padding: 36px 36px 80px;
+}
+
+/* Chat owns its own chrome and fills the viewport below the top bar. */
+.innerBleed {
+  padding: 0;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .frame {
+    grid-template-columns: 1fr;
+  }
+
+  .side {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .brand {
+    margin-bottom: 0;
+  }
+
+  .nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 4px;
+    padding-bottom: 2px;
+  }
+
+  .nav a {
+    white-space: nowrap;
+    padding: 8px 12px;
+  }
+
+  .active::before {
+    display: none;
+  }
+
+  .user {
+    display: none;
+  }
+
+  .topbar,
+  .inner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

@@ -1,0 +1,354 @@
+/**
+ * @fileoverview Website Chat styles: the desktop app design system scoped under .fchat.
+ * @author Samuel S. L.
+ * @version 1.3.0
+ * @since 2026-09-14
+ * @copyright (c) 2026 Samuel S. L. All rights reserved.
+ * All information contained herein is, and remains, the property of
+ * Samuel S. L. and its suppliers, if any.
+ *
+ * The intellectual, technical, creative, and software concepts contained
+ * herein are proprietary to Samuel S. L. and its suppliers and
+ * are protected by copyright law, trade secret law, and other applicable
+ * intellectual property laws in the Netherlands, the European Union, and
+ * other foreign jurisdictions.
+ *
+ * Where applicable, such rights may be registered, recorded, or protected
+ * with the competent authorities of the Government of the Netherlands,
+ * the European Union, and/or other relevant jurisdictions.
+ *
+ * Dissemination of this information, reproduction of this material,
+ * modification, distribution, disclosure, or commercial use is strictly
+ * forbidden unless prior written permission is obtained from
+ * Samuel S. L.
+ *
+ * @commercialUse Commercial use permitted only with prior written permission from Samuel S. L.
+ *
+ * Structure:
+ * - Tokens copied from pc_app/src/styles.css, redefined on .fchat so the web
+ *   Chat looks exactly like the desktop Chat without leaking into the site
+ * - Every rule is prefixed with .fchat (the ContextMenu portal adds the class)
+ * - Blocks: shell, sidebar list, topbar, buttons, messages, prose, tool rows,
+ *   empty state, composer, dropdown, context ring, context menu
+ */
+
+/* ---------- Tokens ---------- */
+.fchat {
+  --bg: #0f0f0f;
+  --bg-sidebar: #121212;
+  --bg-elev: #171717;
+  --bg-elev-2: #1c1c1c;
+  --bg-hover: #1f1f1f;
+  --bg-active: #242424;
+  --bg-input: #161616;
+  --fg: #ececec;
+  --fg-2: #b4b4b4;
+  --muted: #7c7c7c;
+  --muted-2: #5a5a5a;
+  --border: #232323;
+  --border-2: #2c2c2c;
+  --border-focus: #3a3a3a;
+  --accent: #d6425a;
+  --accent-soft: rgba(214, 66, 90, 0.14);
+  --error: #f0616f;
+  --error-soft: rgba(240, 97, 111, 0.12);
+  --sidebar-w: 248px;
+  --thread-max: 760px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+  --radius-xl: 18px;
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--border-2);
+  --font-ui: Inter, "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --ui-size: 13px;
+  --code-size: 12px;
+  color-scheme: dark;
+  font-family: var(--font-ui);
+  font-size: var(--ui-size);
+  line-height: 1.45;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.fchat *, .fchat *::before, .fchat *::after { box-sizing: border-box; }
+.fchat button, .fchat input, .fchat textarea { font: inherit; color: inherit; }
+.fchat button { cursor: pointer; }
+.fchat button:disabled { cursor: default; }
+.fchat a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--muted-2); }
+.fchat a:hover { color: var(--fg); }
+.fchat kbd {
+  font-family: var(--font-ui); font-size: 11px; color: var(--muted);
+  background: var(--bg-elev-2); border: 1px solid var(--border-2); border-bottom-width: 2px;
+  border-radius: 4px; padding: 0 5px; line-height: 16px;
+}
+.fchat .muted { color: var(--muted); }
+.fchat .grow { flex: 1; min-width: 0; }
+.fchat .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fchat ::-webkit-scrollbar { width: 10px; height: 10px; }
+.fchat ::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+.fchat *:hover::-webkit-scrollbar-thumb { background: var(--border-2); border: 3px solid transparent; background-clip: padding-box; }
+.fchat ::-webkit-scrollbar-track { background: transparent; }
+.fchat :focus-visible { outline: 1px solid var(--border-focus); outline-offset: 1px; }
+
+/* ---------- Shell ---------- */
+.fchat.chat-shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: calc(100vh - 56px); min-height: 480px; }
+.fchat.chat-shell.list-hidden { grid-template-columns: 1fr; }
+.fchat .thread { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+
+/* ---------- Sidebar ---------- */
+.fchat .sidebar {
+  background: var(--bg-sidebar); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+}
+.fchat .nav { padding: 10px 10px 6px; display: flex; flex-direction: column; gap: 1px; }
+.fchat .nav button {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  background: transparent; border: 0; padding: 6px 8px; border-radius: var(--radius-s);
+  color: var(--fg-2);
+}
+.fchat .nav button span { flex: 1; }
+.fchat .nav button kbd { opacity: 0; transition: opacity 120ms; }
+.fchat .nav button:hover kbd { opacity: 1; }
+.fchat .nav button:hover, .fchat .nav button.active { background: var(--bg-hover); color: var(--fg); }
+.fchat .sidebar-scroll { flex: 1; overflow: auto; min-height: 0; padding-bottom: 8px; }
+.fchat .section-label { color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: 0.02em; padding: 12px 18px 4px; }
+.fchat .list { padding: 0 10px; display: flex; flex-direction: column; gap: 1px; }
+.fchat .list .row {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: transparent; border: 0; padding: 5px 8px; border-radius: var(--radius-s);
+  color: var(--fg-2); min-width: 0;
+}
+.fchat .list .row:hover { background: var(--bg-hover); color: var(--fg); }
+.fchat .list .row.active { background: var(--bg-active); color: var(--fg); }
+.fchat .row-icon { color: var(--muted); flex: none; }
+.fchat .row-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fchat .row-time { color: var(--muted-2); font-size: 11px; flex: none; }
+.fchat .list-empty { color: var(--muted-2); font-size: 12px; padding: 4px 8px; }
+
+/* ---------- Context menu (portal: root carries .fchat) ---------- */
+.fchat.cm { position: fixed; z-index: 100; background: transparent; }
+.fchat .cm-list {
+  margin: 0; padding: 4px; list-style: none; background: var(--bg-elev-2); border-radius: var(--radius-m);
+  box-shadow: var(--shadow-pop); border: 1px solid var(--border);
+}
+.fchat .cm-row { position: relative; }
+.fchat .cm-row > button {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; text-align: left;
+  background: transparent; border: 0; border-radius: var(--radius-s); color: var(--fg-2); font-size: 12.5px;
+}
+.fchat .cm-row > button:hover:not(:disabled), .fchat .cm-row.open > button { background: var(--bg-hover); color: var(--fg); }
+.fchat .cm-row.disabled > button { opacity: 0.4; }
+.fchat .cm-row.danger > button { color: var(--error); }
+.fchat .cm-icon { display: inline-flex; width: 14px; justify-content: center; color: var(--muted); flex: none; }
+.fchat .cm-row.danger .cm-icon { color: var(--error); }
+.fchat .cm-text { flex: 1; white-space: nowrap; }
+.fchat .cm-trailing { color: var(--muted-2); font-size: 11.5px; }
+.fchat .cm-kbd { color: var(--muted-2); font-size: 11px; font-family: inherit; }
+.fchat .cm-caret { color: var(--muted-2); }
+.fchat .cm-sep { height: 1px; margin: 4px 6px; background: var(--border-2); }
+.fchat .cm-label { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 2px; color: var(--muted-2); font-size: 11px; }
+.fchat .cm-sub { position: absolute; top: -4px; left: calc(100% + 2px); }
+.fchat .cm-sub.left { left: auto; right: calc(100% + 2px); }
+
+/* ---------- Topbar ---------- */
+.fchat .topbar {
+  height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 14px;
+  border-bottom: 1px solid var(--border); flex: none;
+}
+.fchat .topbar-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+
+/* ---------- Buttons ---------- */
+.fchat .icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border-radius: var(--radius-s); border: 0; background: transparent; color: var(--muted);
+}
+.fchat .icon-btn:hover { background: var(--bg-hover); color: var(--fg); }
+.fchat .icon-btn.on { color: var(--fg); background: var(--bg-active); }
+
+/* ---------- Messages ---------- */
+.fchat .messages { flex: 1; overflow: auto; min-height: 0; }
+.fchat .messages-inner { max-width: var(--thread-max); margin: 0 auto; padding: 20px 24px 12px; }
+.fchat .msg { margin-bottom: 18px; }
+.fchat .msg.user {
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-m);
+  padding: 10px 14px; margin: 6px 0 20px;
+}
+.fchat .user-text { white-space: pre-wrap; word-break: break-word; font-size: 13.5px; }
+.fchat .msg.system { color: var(--muted); font-size: 12.5px; }
+.fchat .attachments { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.fchat .chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px;
+  background: var(--bg-elev-2); border: 1px solid var(--border-2); color: var(--fg-2); font-size: 11.5px;
+}
+.fchat .chip button { display: inline-flex; border: 0; background: transparent; color: var(--muted); padding: 0; margin-left: 2px; }
+.fchat .chip button:hover { color: var(--fg); }
+
+.fchat .prose { font-size: 14px; line-height: 1.6; color: var(--fg); word-break: break-word; }
+.fchat .prose > :first-child { margin-top: 0; }
+.fchat .prose > :last-child { margin-bottom: 0; }
+.fchat .prose p { margin: 0 0 10px; }
+.fchat .prose h1, .fchat .prose h2, .fchat .prose h3, .fchat .prose h4 { font-weight: 600; margin: 18px 0 8px; line-height: 1.3; letter-spacing: 0; }
+.fchat .prose h1 { font-size: 20px; } .fchat .prose h2 { font-size: 17px; } .fchat .prose h3 { font-size: 15px; } .fchat .prose h4 { font-size: 14px; }
+.fchat .prose ul, .fchat .prose ol { margin: 0 0 10px; padding-left: 22px; }
+.fchat .prose li { margin: 3px 0; }
+.fchat .prose li::marker { color: var(--muted); }
+.fchat .prose blockquote { margin: 8px 0; padding: 2px 12px; border-left: 2px solid var(--border-2); color: var(--fg-2); }
+.fchat .prose hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+.fchat .prose table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; font-size: 13px; }
+.fchat .prose th, .fchat .prose td { border: 1px solid var(--border-2); padding: 5px 9px; text-align: left; }
+.fchat .prose th { background: var(--bg-elev); font-weight: 600; }
+.fchat .prose code {
+  font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-elev-2);
+  border: 1px solid var(--border-2); border-radius: 4px; padding: 0 4px;
+}
+.fchat .prose h1 code, .fchat .prose h2 code, .fchat .prose h3 code, .fchat .prose h4 code { font-size: 0.85em; }
+.fchat .codeblock { margin: 10px 0 12px; border: 1px solid var(--border-2); border-radius: var(--radius-m); overflow: hidden; background: var(--bg-elev); }
+.fchat .codeblock-bar {
+  display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 4px 12px;
+  border-bottom: 1px solid var(--border); color: var(--muted); font-size: 11.5px;
+}
+.fchat .codeblock pre { margin: 0; padding: 12px 14px; overflow: auto; font-family: var(--font-mono); font-size: calc(var(--code-size) + 0.5px); line-height: 1.55; }
+.fchat .codeblock code { background: transparent; border: 0; padding: 0; font-size: inherit; }
+
+.fchat .cursor-blink { display: inline-block; width: 7px; height: 14px; background: var(--fg-2); margin-left: 2px; vertical-align: -2px; animation: fchat-blink 1s steps(2) infinite; }
+@keyframes fchat-blink { to { visibility: hidden; } }
+.fchat .thinking { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12.5px; margin: 8px 0 16px; }
+.fchat .spinner {
+  width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--border-focus); border-top-color: var(--fg-2);
+  animation: fchat-spin 0.8s linear infinite; flex: none;
+}
+@keyframes fchat-spin { to { transform: rotate(360deg); } }
+
+/* Tool rows */
+.fchat .tool-row { margin: 4px 0 8px; border-radius: var(--radius-s); }
+.fchat .tool-head {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: transparent; border: 0;
+  padding: 5px 6px; border-radius: var(--radius-s); color: var(--muted); font-size: 12.5px; min-width: 0;
+}
+.fchat .tool-head:not(:disabled):hover { background: var(--bg-hover); color: var(--fg-2); }
+.fchat .tool-caret { transition: transform 120ms; }
+.fchat .tool-row.open .tool-caret { transform: rotate(90deg); }
+.fchat .tool-name { flex: none; }
+.fchat .tool-head code { font-family: var(--font-mono); font-size: var(--code-size); color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent; border: 0; padding: 0; }
+.fchat .tool-result {
+  margin: 2px 0 0 26px; padding: 10px 12px; font-family: var(--font-mono); font-size: var(--code-size); line-height: 1.5;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-s);
+  white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto; color: var(--fg-2);
+}
+
+/* Empty state */
+.fchat .empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--muted); gap: 8px; padding: 24px; text-align: center; min-height: 0; overflow: auto;
+}
+.fchat .empty-mark {
+  width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  background: var(--bg-elev-2); border: 1px solid var(--border-2); color: var(--fg); margin-bottom: 6px;
+}
+.fchat .empty h1 { color: var(--fg); font-weight: 600; margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+.fchat .empty p { margin: 0; max-width: 380px; font-size: 13px; }
+.fchat .empty .tip { display: inline-flex; align-items: center; gap: 6px; color: var(--muted-2); font-size: 12px; margin-top: 10px; }
+
+/* ---------- Composer ---------- */
+.fchat .composer { flex: none; padding: 0 24px 14px; max-width: calc(var(--thread-max) + 48px); width: 100%; margin: 0 auto; }
+.fchat .error-strip {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 6px 8px 6px 12px;
+  background: var(--error-soft); border: 1px solid rgba(240, 97, 111, 0.3); border-radius: var(--radius-s);
+  color: var(--error); font-size: 12.5px;
+}
+.fchat .error-strip span { flex: 1; }
+.fchat .composer-card {
+  background: var(--bg-input); border: 1px solid var(--border-2); border-radius: var(--radius-xl);
+  padding: 10px 10px 8px 12px; transition: border-color 120ms, box-shadow 120ms;
+}
+.fchat .composer-card:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03); }
+.fchat .working-strip {
+  display: flex; align-items: center; gap: 8px; margin: -4px -4px 8px -6px; padding: 5px 4px 5px 8px;
+  border-radius: var(--radius-m); background: var(--bg-elev-2); color: var(--fg-2); font-size: 12px;
+}
+.fchat .working-text { flex: 1; font-weight: 500; }
+.fchat .working-time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.fchat .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent-soft); animation: fchat-pulse 1.6s ease-out infinite; }
+@keyframes fchat-pulse { 0% { box-shadow: 0 0 0 0 rgba(214, 66, 90, 0.5); } 100% { box-shadow: 0 0 0 8px rgba(214, 66, 90, 0); } }
+.fchat .composer textarea {
+  width: 100%; display: block; background: transparent; border: 0; resize: none; outline: none;
+  min-height: 24px; max-height: 240px; font-size: 14px; line-height: 1.5; padding: 4px 4px 6px 2px; color: var(--fg);
+}
+.fchat .composer textarea::placeholder { color: var(--muted); }
+.fchat .composer-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.fchat .send-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-active); color: var(--muted); transition: background 120ms, color 120ms;
+}
+.fchat .send-btn.ready { background: var(--fg); color: #111; }
+.fchat .send-btn.ready:hover { background: #fff; }
+.fchat .send-btn:disabled { opacity: 0.6; }
+.fchat .plan-limits { display: flex; align-items: center; gap: 6px; padding: 10px 8px 0; color: var(--muted); font-size: 11.5px; }
+.fchat .plan-limits.exhausted { color: var(--error); }
+.fchat .composer-footer { display: flex; align-items: center; gap: 6px; padding: 8px 8px 0; color: var(--muted); font-size: 11.5px; }
+.fchat .ctx-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 4px; color: var(--muted); max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fchat .ctx-chip:hover { background: var(--bg-hover); color: var(--fg-2); }
+.fchat .hint { color: var(--muted-2); }
+
+/* ---------- Dropdown ---------- */
+.fchat .dd { position: relative; }
+.fchat .dd-trigger {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px 4px 9px; border-radius: var(--radius-s);
+  border: 1px solid transparent; background: transparent; color: var(--fg-2); font-size: 12.5px; font-weight: 500;
+}
+.fchat .dd-trigger.compact { padding: 3px 6px 3px 8px; }
+.fchat .dd-trigger:hover { background: var(--bg-hover); color: var(--fg); }
+.fchat .dd-caret { color: var(--muted); }
+.fchat .dd-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.fchat .dd-menu {
+  position: fixed; z-index: 40; min-width: 220px; margin: 0; padding: 4px; list-style: none; overflow-y: auto;
+  background: var(--bg-elev-2); border-radius: var(--radius-m); box-shadow: var(--shadow-pop);
+}
+.fchat .dd-menu.measuring { top: 0; left: 0; visibility: hidden; }
+.fchat .dd-menu button {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 7px 9px;
+  background: transparent; border: 0; border-radius: var(--radius-s); color: var(--fg-2);
+}
+.fchat .dd-menu button:hover { background: var(--bg-hover); color: var(--fg); }
+.fchat .dd-menu button.selected { color: var(--fg); }
+.fchat .dd-menu button:disabled, .fchat .dd-menu button:disabled:hover { opacity: 0.4; background: transparent; color: var(--fg-2); cursor: default; }
+.fchat .dd-item-icon { flex: none; color: var(--muted); }
+.fchat .dd-item-text { flex: 1; display: flex; flex-direction: column; line-height: 1.25; }
+.fchat .dd-item-text small { color: var(--muted); font-size: 11px; }
+
+/* ---------- Context ring + popover ---------- */
+.fchat .ctx-ring { position: relative; display: inline-flex; }
+.fchat .ctx-ring-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border-radius: var(--radius-s); border: 0; background: transparent; color: var(--border-focus);
+}
+.fchat .ctx-ring-btn:hover { background: var(--bg-hover); color: var(--muted); }
+.fchat .ctx-ring-btn.danger { color: rgba(240, 97, 111, 0.35); }
+.fchat .ring { display: block; }
+.fchat .ring-fill { transition: stroke-dashoffset 400ms ease, stroke 200ms ease; }
+.fchat .ctx-pop {
+  position: absolute; bottom: calc(100% + 8px); right: 0; z-index: 40; width: 340px; padding: 12px 14px 10px;
+  background: var(--bg-elev-2); border-radius: var(--radius-m); box-shadow: var(--shadow-pop);
+  animation: fchat-pop-in 120ms ease-out;
+}
+@keyframes fchat-pop-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.fchat .ctx-pop-title { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
+.fchat .ctx-pop-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.fchat .ctx-pop-pct { color: var(--fg-2); font-size: 12.5px; }
+.fchat .ctx-pop-tokens { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.fchat .ctx-bar { display: flex; gap: 2px; height: 5px; border-radius: 3px; background: var(--bg-active); overflow: hidden; margin-bottom: 12px; }
+.fchat .ctx-bar-seg { height: 100%; min-width: 3px; border-radius: 2px; transition: width 300ms ease; }
+.fchat .ctx-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.fchat .ctx-rows li { display: flex; align-items: center; gap: 9px; padding: 5px 0; font-size: 12.5px; color: var(--fg-2); border-top: 1px solid var(--border); }
+.fchat .ctx-rows li:first-child { border-top: 0; }
+.fchat .ctx-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.fchat .ctx-row-label { flex: 1; }
+.fchat .ctx-row-value { color: var(--muted); font-variant-numeric: tabular-nums; }
+.fchat .ctx-empty { color: var(--muted); font-size: 12px; padding: 4px 0; }
+
+@media (max-width: 900px) {
+  .fchat.chat-shell { grid-template-columns: 1fr; height: calc(100vh - 140px); }
+  .fchat.chat-shell:not(.list-hidden) .sidebar { display: none; }
+}

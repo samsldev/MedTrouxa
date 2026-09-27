@@ -1,0 +1,79 @@
+/**
+ * @fileoverview Styles for the analytics consent banner.
+ * @author Samuel S. L.
+ * @version 1.0.0
+ * @since 2026-09-26
+ * @copyright (c) 2026 Samuel S. L. All rights reserved.
+ * All information contained herein is, and remains, the property of
+ * Samuel S. L. and its suppliers, if any.
+ *
+ * The intellectual, technical, creative, and software concepts contained
+ * herein are proprietary to Samuel S. L. and its suppliers and
+ * are protected by copyright law, trade secret law, and other applicable
+ * intellectual property laws in the Netherlands, the European Union, and
+ * other foreign jurisdictions.
+ *
+ * Where applicable, such rights may be registered, recorded, or protected
+ * with the competent authorities of the Government of the Netherlands,
+ * the European Union, and/or other relevant jurisdictions.
+ *
+ * Dissemination of this information, reproduction of this material,
+ * modification, distribution, disclosure, or commercial use is strictly
+ * forbidden unless prior written permission is obtained from
+ * Samuel S. L.
+ *
+ * @commercialUse Commercial use permitted only with prior written permission from Samuel S. L.
+ *
+ * <DETAILED_DESCRIPTION>:
+ * - Fixed to the bottom edge, above page content, full width on phones
+ * - Uses the shared surface, border, and text tokens so it follows the site theme
+ */
+
+.banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 16px 18px;
+  background: var(--surface, #111);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+
+.text strong {
+  display: block;
+  color: var(--fg);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.text p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions {
+    justify-content: flex-end;
+  }
+}

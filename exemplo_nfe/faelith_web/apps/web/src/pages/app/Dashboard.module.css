@@ -1,0 +1,149 @@
+/**
+ * @fileoverview Shared dashboard page styles: titles, stat cards, and one-time secret box.
+ * @author Samuel S. L.
+ * @version 2.4.0
+ * @since 2026-09-06
+ * @copyright (c) 2026 Samuel S. L. All rights reserved.
+ * All information contained herein is, and remains, the property of
+ * Samuel S. L. and its suppliers, if any.
+ *
+ * The intellectual, technical, creative, and software concepts contained
+ * herein are proprietary to Samuel S. L. and its suppliers and
+ * are protected by copyright law, trade secret law, and other applicable
+ * intellectual property laws in the Netherlands, the European Union, and
+ * other foreign jurisdictions.
+ *
+ * Where applicable, such rights may be registered, recorded, or protected
+ * with the competent authorities of the Government of the Netherlands,
+ * the European Union, and/or other relevant jurisdictions.
+ *
+ * Dissemination of this information, reproduction of this material,
+ * modification, distribution, disclosure, or commercial use is strictly
+ * forbidden unless prior written permission is obtained from
+ * Samuel S. L.
+ *
+ * @commercialUse Commercial use permitted only with prior written permission from Samuel S. L.
+ *
+ * DETAILED_DESCRIPTION:
+ * - Constrains dashboard content width and tightens page titles
+ * - Large tabular-numeral stat values for meters and wallet
+ * - Gold dashed one-time secret box for freshly issued API keys
+ */
+
+.wrap {
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  letter-spacing: -0.04em;
+  margin: 6px 0 24px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  margin: 40px 0 14px;
+}
+
+/* Scoped under .wrap to outrank the global .card p rule. */
+.wrap .stat {
+  font-size: 30px;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  line-height: 1.1;
+}
+
+.wrap .statSub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.secret {
+  background: var(--accent-soft);
+  border: 1px dashed rgba(var(--accent-rgb), 0.6);
+  border-radius: 12px;
+  padding: 14px 16px;
+  word-break: break-all;
+  margin: 0 0 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.secret strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+/* Spending: token total with a Cursor-style hover breakdown. */
+.tokenCell {
+  cursor: default;
+  border-bottom: 1px dotted var(--border-strong);
+}
+
+.tokenPopover {
+  position: fixed;
+  z-index: 50;
+  min-width: 220px;
+  padding: 10px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.tokenRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 5px 0;
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.tokenTotal {
+  margin-top: 4px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Spending: custom credit amount next to the pack buttons. */
+.customTopup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--input);
+}
+
+.customPrefix {
+  color: var(--muted);
+}
+
+.customTopup input {
+  width: 96px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  outline: none;
+}

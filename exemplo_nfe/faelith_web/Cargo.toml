@@ -1,0 +1,71 @@
+# @fileoverview Virtual Cargo workspace for the Faelith Industries website.
+# @author Samuel S. L.
+# @version 1.6.0
+# @since 2026-09-06
+# @copyright (c) 2026 Samuel S. L. All rights reserved.
+#
+# @commercialUse Commercial use permitted only with prior written permission from Samuel S. L.
+#
+# Workspace:
+# - Axum 0.8 origin for sessions, OAuth, Stripe, and the dashboard API
+# Primary docs: https://docs.rs/axum/latest/axum/
+# https://vite.dev/guide/
+
+[workspace]
+resolver = "2"
+members = ["crates/faelith-web"]
+
+[workspace.package]
+version = "1.2.0"
+edition = "2021"
+authors = ["Samuel S. L."]
+license = "UNLICENSED"
+publish = false
+
+[workspace.dependencies]
+aes-gcm = "0.10"
+anyhow = "1.0"
+argon2 = "0.5"
+async-trait = "0.1"
+axum = { version = "0.8", features = ["json", "macros"] }
+base64 = "0.22"
+bytes = "1.10"
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+# Test stack for now: same crate API as faelith_api, points at api_test_wafer.
+faelith-core = { path = "../faelith_api/crates/faelith-core" }
+# Shared Chat engine and its settings/model catalog (faelith_cli workspace).
+faelith-chat = { path = "../faelith_cli/crates/faelith-chat" }
+faelith-config = { path = "../faelith_cli/crates/faelith-config" }
+faelith-types = { path = "../faelith_cli/crates/faelith-types" }
+futures-util = "0.3"
+hex = "0.4"
+hmac = "0.12"
+http = "1.3"
+jsonwebtoken = "9.3"
+# SMTP over rustls (no OpenSSL on the VPS); pooled async transport on Tokio.
+lettre = { version = "0.11.23", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1-rustls-tls"] }
+password-hash = { version = "0.5", features = ["std"] }
+rand = "0.8"
+redis = { version = "0.27", default-features = false, features = ["tokio-comp", "connection-manager", "script"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+# NFS-e Nacional: RSA-SHA1 XMLDSig over the DPS, gzip transport, and certificate expiry checks.
+sha1 = { version = "0.10", features = ["oid"] }
+rsa = { version = "0.9", features = ["pem", "sha1"] }
+flate2 = "1.0"
+x509-cert = { version = "0.2", features = ["pem"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls-ring-webpki", "postgres", "uuid", "chrono", "json"] }
+subtle = "2.6"
+thiserror = "2.0"
+tokio = { version = "1.47", features = ["rt-multi-thread", "macros", "time", "signal", "fs", "sync"] }
+tokio-stream = "0.1"
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["fs", "set-header", "trace", "limit"] }
+# RFC 6238 TOTP plus otpauth:// URL and QR PNG; seeds come from our own CSPRNG.
+totp-rs = { version = "6.0.0", default-features = false, features = ["std", "otpauth", "qr"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+url = "2.5"
+uuid = { version = "1.11", features = ["serde", "v4"] }

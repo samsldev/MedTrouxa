@@ -1,0 +1,32 @@
+Set-Location 'C:\Users\User\Desktop\AAA\Projetos\CLIs\faelith_web'
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+notepad .env
+
+Set-Location ..\faelith_api_test
+docker compose up -d
+docker compose ps
+docker compose exec redis redis-cli PING
+
+Set-Location 'C:\Users\User\Desktop\AAA\Projetos\CLIs\faelith_web'
+
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^\s*([^#=\s][^=]*)=(.*)$') {
+    [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim(), 'Process')
+  }
+}
+
+cargo run -p faelith-web
+
+Set-Location 'C:\Users\User\Desktop\AAA\Projetos\CLIs\faelith_web\apps\web'
+npm ci
+npm run dev
+Start-Process 'http://127.0.0.1:5173'
+
+curl.exe http://127.0.0.1:8081/healthz
+
+Set-Location 'C:\Users\User\Desktop\AAA\Projetos\CLIs\faelith_web'
+cargo test --workspace
+
+Set-Location apps\web
+npm run build
+npm run test:smoke

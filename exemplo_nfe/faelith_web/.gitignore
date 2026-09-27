@@ -1,0 +1,7 @@
+/target
+**/*.rs.bk
+.env
+.env.local
+apps/web/node_modules
+apps/web/dist
+apps/web/.vite
