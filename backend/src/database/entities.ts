@@ -149,4 +149,31 @@ export class Subscription {
   @CreateDateColumn() startsAt: Date;
   @Column({ type: 'timestamptz' }) expiresAt: Date;
 }
-export const ENTITIES = [User, Subject, Topic, Question, Answer, Deck, Flashcard, CardReview, Exam, StudyPlan, PlanEnrollment, Subscription];
+
+/** Depoimento/aprovação de aluno. Gerenciado pelo admin; `isDemo` marca conteúdo de exemplo (nunca em produção). */
+@Entity('testimonials')
+export class Testimonial {
+  @PrimaryGeneratedColumn() id: number;
+  @Column() name: string;
+  /** Ex.: "UFTM", "Universidade Federal do Oeste da Bahia" */
+  @Column({ nullable: true }) school?: string;
+  @Column('text') quote: string;
+  /** Especialidade em que foi aprovado(a), ex.: "Oftalmologia" */
+  @Column({ nullable: true }) specialty?: string;
+  /** Instituições da aprovação, ex.: "USP e UNIFESP" */
+  @Column({ nullable: true }) institutions?: string;
+  /** Resultado de destaque, ex.: "93 pontos no ENAMED" */
+  @Column({ nullable: true }) highlight?: string;
+  @Column({ type: 'int', default: 5 }) rating: number;
+  @Column({ nullable: true }) photoUrl?: string;
+  @Column({ nullable: true }) videoUrl?: string;
+  /** Aparece nos cards grandes do topo */
+  @Column({ default: false }) featured: boolean;
+  /** Conta como aprovado(a) no mural de aprovados */
+  @Column({ default: true }) approved: boolean;
+  @Column({ default: true }) published: boolean;
+  @Column({ default: false }) isDemo: boolean;
+  @CreateDateColumn() createdAt: Date;
+}
+
+export const ENTITIES = [User, Subject, Topic, Question, Answer, Deck, Flashcard, CardReview, Exam, StudyPlan, PlanEnrollment, Subscription, Testimonial];

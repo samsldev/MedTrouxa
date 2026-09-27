@@ -101,6 +101,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-medtrouxa}
       DB_NAME: ${DB_NAME:-medtrouxa}
       DB_SYNC: "true"
+      # Depoimentos de EXEMPLO na landing (só fora de produção). Em produção: NODE_ENV=production
+      DEMO_CONTENT: ${DEMO_CONTENT:-true}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-troque-este-segredo}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

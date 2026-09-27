@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, Logo, Stars } from '../components/Brand';
+import Footer from '../components/Footer';
 import Pricing from '../components/Pricing';
+import { Approvals, StatsStrip, Testimonials, useSocial } from '../components/SocialProof';
 import { spotlight, useReveal, useScrolled } from '../hooks';
 
 const TABS = [
@@ -91,7 +93,8 @@ export default function Landing() {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('questoes');
   const current = TABS.find((t) => t.id === tab)!;
   const scrolled = useScrolled();
-  useReveal();
+  const { stats, items } = useSocial();
+  useReveal([stats, items]);
 
   return (
     <div className="landing">
@@ -153,6 +156,8 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      <StatsStrip stats={stats} />
 
       <section id="recursos" className="lp-section">
         <div className="lp-wrap">
@@ -246,6 +251,9 @@ export default function Landing() {
         </div>
       </section>
 
+      <Approvals items={items} />
+      <Testimonials items={items} />
+
       <section id="planos" className="lp-section pricing-section">
         <div className="lp-wrap">
           <div className="section-head center" data-reveal>
@@ -289,13 +297,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="lp-footer">
-        <div className="lp-wrap lp-footer-in">
-          <Logo size={22} />
-          <nav><a href="#recursos">Recursos</a><a href="#planos">Planos</a><a href="#faq">Dúvidas</a><Link to="/login">Entrar</Link></nav>
-          <small>© {new Date().getFullYear()} MedTrouxa · Conteúdo educacional; não substitui avaliação médica.</small>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

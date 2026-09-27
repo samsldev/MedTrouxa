@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { seedDemoContent } from './database/demo';
 import { seedIfEmpty } from './database/seed';
 
 async function bootstrap() {
@@ -11,6 +12,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableShutdownHooks();
   await seedIfEmpty(app);
+  await seedDemoContent(app);
   await app.listen(Number(process.env.PORT ?? 3000));
 }
 bootstrap();

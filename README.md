@@ -32,6 +32,24 @@ Regras de cobrança (`backend/src/billing`): à vista (Pix ou 1x no cartão) = p
 **A cobrança ainda é simulada**: o checkout aprova na hora e não coleta dados de cartão. Para produção, integre um
 gateway (Pagar.me, Mercado Pago, Stripe) em `BillingService.checkout`.
 
+## Prova social (números, aprovados e depoimentos)
+
+- **Números** (`GET /api/public/stats`): contados ao vivo no banco — questões, flashcards, questões resolvidas e
+  estudantes. Nunca são inventados; acima de mil aparecem como "+80 mil".
+- **Aprovados e depoimentos** (`GET /api/public/testimonials`): tabela `testimonials`, gerenciada pelo admin:
+  `POST`, `PATCH /:id` e `DELETE /:id` em `/api/public/testimonials`. Campos: nome, faculdade, depoimento,
+  especialidade, instituições, destaque (ex.: "93 pontos no ENAMED"), nota, foto, vídeo, `featured` (cards grandes)
+  e `approved` (entra no mural de aprovados). As seções somem sozinhas enquanto não houver registros.
+  Só publique depoimentos reais, com autorização de uso de nome e imagem.
+- **Exemplos para desenvolvimento**: com `DEMO_CONTENT=true` (padrão do compose) são criados depoimentos de pessoas
+  fictícias, exibidos com o selo "Exemplo". Com `NODE_ENV=production` eles não são criados nem retornados pela API.
+
+### Rodapé
+
+Dados da empresa via variáveis do build do frontend (campos vazios não aparecem):
+`VITE_LEGAL_NAME`, `VITE_CNPJ`, `VITE_CONTACT_EMAIL`, `VITE_WHATSAPP` (só dígitos com DDI) e `VITE_INSTAGRAM` (usuário).
+Termos de uso e Política de privacidade estão em `/termos` e `/privacidade`, ainda como "em preparação".
+
 ## Identidade visual
 
 "Medicina mágica, minimalista": meia-noite (`#0E1030`), pergaminho (`#FAF7F0`) e ouro antigo (`#B8904F`), com

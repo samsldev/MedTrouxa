@@ -12,6 +12,7 @@ import { ExamsModule } from './exams/exams.module';
 import { FlashcardsModule } from './flashcards/flashcards.module';
 import { QuestionsModule } from './questions/questions.module';
 import { RedisModule, RedisService } from './redis/redis.module';
+import { SocialModule } from './social/social.module';
 import { StatsModule } from './stats/stats.module';
 import { StudyPlansModule } from './study-plans/study-plans.module';
 import { SubjectsModule } from './subjects/subjects.module';
@@ -32,7 +33,7 @@ class HealthController {
   imports: [
     TypeOrmModule.forRootAsync({ useFactory: dataSourceOptions }),
     JwtModule.register({ global: true, secret: process.env.JWT_SECRET ?? 'dev-secret', signOptions: { expiresIn: '7d' } }),
-    RedisModule, AuthModule, SubjectsModule, QuestionsModule, FlashcardsModule, ExamsModule, StudyPlansModule, StatsModule, AiModule, BillingModule,
+    RedisModule, AuthModule, SubjectsModule, QuestionsModule, FlashcardsModule, ExamsModule, StudyPlansModule, StatsModule, AiModule, BillingModule, SocialModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtGuard }],

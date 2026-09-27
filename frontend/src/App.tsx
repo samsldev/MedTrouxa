@@ -9,6 +9,7 @@ import ExamPage from './pages/ExamPage';
 import Exams from './pages/Exams';
 import Flashcards from './pages/Flashcards';
 import Landing from './pages/Landing';
+import Legal from './pages/Legal';
 import Login from './pages/Login';
 import Plans from './pages/Plans';
 import Questions from './pages/Questions';
@@ -67,6 +68,8 @@ export default function App() {
     <Routes>
       <Route index element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/termos" element={<Legal doc="termos" />} />
+      <Route path="/privacidade" element={<Legal doc="privacidade" />} />
       <Route element={<Private bare />}>
         <Route path="checkout/:planId" element={<Checkout />} />
       </Route>
