@@ -121,6 +121,28 @@ services:
       MAIL_FROM: ${MAIL_FROM:-MedTrouxa <nao-responda@medtrouxa.com.br>}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-claude-sonnet-5}
+      # Emissor de NFS-e Nacional (ver README). Desligado até NFSE_ENABLED=1.
+      NFSE_ENABLED: ${NFSE_ENABLED:-0}
+      NFSE_ENV: ${NFSE_ENV:-homologacao}
+      NFSE_CNPJ: ${NFSE_CNPJ:-}
+      NFSE_IM: ${NFSE_IM:-}
+      NFSE_CITY_CODE: ${NFSE_CITY_CODE:-}
+      NFSE_SERIES: ${NFSE_SERIES:-1}
+      NFSE_TRIB_NAC: ${NFSE_TRIB_NAC:-010301}
+      NFSE_NBS: ${NFSE_NBS:-}
+      NFSE_SIMPLES_OPTION: ${NFSE_SIMPLES_OPTION:-3}
+      NFSE_SIMPLES_REGIME: ${NFSE_SIMPLES_REGIME:-1}
+      NFSE_SPECIAL_REGIME: ${NFSE_SPECIAL_REGIME:-0}
+      NFSE_DESCRIPTION: ${NFSE_DESCRIPTION:-}
+      NFSE_IBSCBS_CINDOP: ${NFSE_IBSCBS_CINDOP:-}
+      NFSE_IBSCBS_CST: ${NFSE_IBSCBS_CST:-}
+      NFSE_IBSCBS_CCLASSTRIB: ${NFSE_IBSCBS_CCLASSTRIB:-}
+      NFSE_CERT_PEM_PATH: /run/secrets/nfse/nfse-cert.pem
+      NFSE_KEY_PEM_PATH: /run/secrets/nfse/nfse-key.pem
+      NFSE_CA_BUNDLE_PATH: ${NFSE_CA_BUNDLE_PATH:-}
+    volumes:
+      # Certificado A1 convertido para PEM (somente leitura; nunca versione esta pasta)
+      - ./secrets/nfse:/run/secrets/nfse:ro
 
   frontend:
     build:

@@ -93,6 +93,30 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 - **Admin**: defina `ADMIN_EMAIL`/`ADMIN_PASSWORD` no primeiro deploy; o painel fica em `/admin`.
 - **Backups** diários criptografados em `./backups`.
 
+### Nota fiscal (NFS-e Nacional)
+
+Emissor próprio da **NFS-e Nacional** (padrão nacional gov.br), portado 1:1 do emissor em Rust do Faelith
+(`backend/src/nfse`, original em `exemplo_nfe/faelith_web/crates/faelith-web/src/nfse`):
+
+- **Automático no webhook**: pagamento aprovado no Mercado Pago → a nota entra na fila (uma por assinatura, idempotente)
+  **antes** de liberar o acesso. Um worker a cada 30 s monta a DPS (layout 1.01), assina (XMLDSig RSA-SHA1 com o
+  certificado A1), envia à Sefin Nacional por mTLS e **manda o e-mail com o PDF (DANFSe) e o XML anexados**.
+- **CPF/CNPJ**: vem do pagador no Mercado Pago, do campo no checkout ou de *Assinatura → Notas fiscais*. Sem ele, a nota
+  fica "Aguardando seu CPF / CNPJ" e o cliente recebe um e-mail; ao informar, a emissão é retomada.
+- **Robustez**: número de DPS atômico por série e gravado antes do envio; resultado incerto é recuperado pelo id da DPS
+  (nunca reenvia em duplicidade); falhas transitórias com espera exponencial (até 6 h); rejeições param para o admin.
+- **Estornos**: reembolso integral ou chargeback cancela a nota (evento e101101); estorno parcial fica para revisão.
+- **Admin** (`/admin` → Notas fiscais): status do emissor e validade do certificado (alerta a 30 dias), filtros,
+  downloads, reprocessar e cancelar (exige senha e 2FA, fica no log de segurança).
+- **Guarda legal**: notas nunca são apagadas, nem na exclusão da conta.
+
+Configuração: veja o bloco `NFSE_*` em `.env.production.example`. Comece com `NFSE_ENV=homologacao` e valide com o
+contador (cTribNac, NBS, regime do Simples). Em desenvolvimento o compose usa `NFSE_ENABLED=simulate`, que monta e
+assina a DPS de verdade mas simula o sistema nacional (notas sem valor fiscal).
+
+Conformidade testada: o port gera o **mesmo documento, byte a byte**, que o emissor em Rust para o exemplo
+`docs/nfse-exemplo/dps_starter.xml`, com o mesmo `DigestValue`, e a assinatura original valida sobre o SignedInfo do port.
+
 Detalhes de segurança e LGPD: [SECURITY.md](SECURITY.md).
 
 ### Plano gratuito × pagos

@@ -107,6 +107,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-only-secret-not-for-production-use-000}
       APP_URL: http://localhost:5173
       PAYMENT_PROVIDER: fake
+      # NFS-e em modo de simulação (sem certificado, sem valor fiscal). Em produção: NFSE_ENABLED=1
+      NFSE_ENABLED: ${NFSE_ENABLED:-simulate}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports: ["3000:3000"]
 

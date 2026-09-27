@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { brl, Plan } from '../billing';
 import { Icon } from '../components/Brand';
+import FiscalNotes from '../components/FiscalNotes';
 import Pricing from '../components/Pricing';
 
 interface Me { plan: Plan | null; subscription: { expiresAt: string; installments: number; amount: number } | null; limits: { tier: string; answersPerDay: number | null } }
@@ -28,6 +29,7 @@ export default function Subscription() {
         )}
       </div>
       <Pricing currentPlanId={me?.plan?.id} ctaHref={(id) => `/checkout/${id}`} />
+      <FiscalNotes />
     </>
   );
 }

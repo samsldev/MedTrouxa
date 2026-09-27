@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { api } from '../api/client';
+import { api, formatTaxId } from '../api/client';
 import { brl, installmentTotal, totalFor } from '../billing';
 import { Icon, Logo } from '../components/Brand';
 import { usePlans } from '../components/Pricing';
@@ -14,6 +14,10 @@ export default function Checkout() {
   const [n, setN] = useState(12);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [taxType, setTaxType] = useState<'cpf' | 'cnpj'>('cpf');
+  const [taxId, setTaxId] = useState('');
+  const [hasIdentity, setHasIdentity] = useState(false);
+  useEffect(() => { api<{ identity: unknown }>('/billing/nfse').then((r) => setHasIdentity(!!r.identity)).catch(() => undefined); }, []);
 
   const options = useMemo(() => (plan ? Array.from({ length: plan.maxInstallments }, (_, i) => i + 1) : []), [plan]);
   if (!plans.length) return <div className="center">Carregando...</div>;
@@ -26,6 +30,7 @@ export default function Checkout() {
   async function confirm() {
     setBusy(true); setError('');
     try {
+      if (taxId) await api('/billing/fiscal-identity', { method: 'PUT', body: { doc_type: taxType, doc_number: taxId } });
       const r = await api<{ subscriptionId: string; status: string; redirectUrl: string | null }>('/billing/checkout', { body: { planId: plan!.id, paymentMethod: method, installments } });
       if (r.redirectUrl && /^https:\/\/([a-z0-9-]+\.)*mercadopago\.com(\.br)?\//.test(r.redirectUrl)) { window.location.assign(r.redirectUrl); return; }
       nav(`/pagamento/${r.subscriptionId}`);
@@ -64,6 +69,23 @@ export default function Checkout() {
                 })}
               </div>
             </>
+          )}
+
+          <h3 className="label">Nota fiscal</h3>
+          {hasIdentity && !taxId ? (
+            <p className="muted small">Seu CPF/CNPJ já está cadastrado. A NFS-e será enviada para o seu e-mail após o pagamento. <button type="button" className="link" onClick={() => setHasIdentity(false)}>Alterar</button></p>
+          ) : (
+            <div className="row wrap">
+              <label className="narrow">Tipo
+                <select value={taxType} onChange={(e) => { setTaxType(e.target.value as 'cpf' | 'cnpj'); setTaxId(''); }}>
+                  <option value="cpf">CPF</option><option value="cnpj">CNPJ</option>
+                </select>
+              </label>
+              <label>{taxType === 'cpf' ? 'CPF para a nota fiscal' : 'CNPJ para a nota fiscal'}
+                <input value={taxId} inputMode="numeric" autoComplete="off" placeholder={taxType === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
+                  onChange={(e) => setTaxId(formatTaxId(e.target.value, taxType))} />
+              </label>
+            </div>
           )}
 
           <p className="fine"><Icon name="shield" size={14} /> Pagamento processado pelo Mercado Pago. O MedTrouxa não armazena dados do seu cartão.</p>

@@ -20,6 +20,9 @@ export interface MpPayment {
   external_reference: string;
   transaction_amount: number;
   currency_id: string;
+  status_detail?: string;
+  date_approved?: string | null;
+  payer?: { email?: string | null; first_name?: string | null; last_name?: string | null; identification?: { type?: string | null; number?: string | null } | null } | null;
 }
 
 /** Cliente mínimo da API do Mercado Pago (Checkout Pro), sem SDK. */

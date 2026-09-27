@@ -10,6 +10,7 @@ import { appUrl, isProd } from '../config/env';
 import { Subscription, User } from '../database/entities';
 import { securityEvent } from '../security/logging';
 import { RateLimit } from '../security/rate-limit';
+import { NfseEngine, NfseModule } from '../nfse/nfse.module';
 import { Limits, LIMITS, Tier } from './entitlements';
 import { MercadoPago } from './mercadopago';
 import { planById, PLANS } from './plans';
@@ -29,7 +30,29 @@ export class BillingService {
   constructor(
     @InjectRepository(Subscription) private subs: Repository<Subscription>,
     @InjectRepository(User) private users: Repository<User>,
+    private nfse: NfseEngine,
   ) {}
+
+  /** Enfileira a NFS-e da cobrança aprovada (idempotente: um documento por assinatura). */
+  private async enqueueInvoice(sub: Subscription, paymentId: string, paidCents: number, paidAt: Date, payer?: { name?: string | null; email?: string | null; identification?: { type?: string | null; number?: string | null } | null }) {
+    const plan = planById(sub.planId)!;
+    const user = await this.users.findOneBy({ id: sub.userId });
+    await this.nfse.onPaid({
+      sourceId: sub.id,
+      paymentId,
+      userId: sub.userId,
+      amountCents: paidCents,
+      currency: 'brl',
+      paidAt,
+      buyerName: user?.name ?? payer?.name ?? null,
+      buyerEmail: user?.email ?? payer?.email ?? null,
+      payerIdentification: payer?.identification ?? null,
+      lines: [
+        `Plano ${plan.name} (${plan.accessYears > 1 ? `${plan.accessYears} anos de acesso` : '1 ano de acesso'})`,
+        sub.paymentMethod === 'pix' ? 'Pix à vista' : sub.installments > 1 ? `cartão em ${sub.installments}x` : 'cartão à vista',
+      ],
+    });
+  }
 
   active(userId: string) {
     return this.subs.findOne({ where: { userId, status: 'active', expiresAt: MoreThan(new Date()) }, order: { expiresAt: 'DESC' } });
@@ -72,6 +95,7 @@ export class BillingService {
 
     if (provider() === 'fake') {
       if (isProd()) throw new ServiceUnavailableException('Pagamentos indisponíveis');
+      await this.enqueueInvoice(sub, `fake-${sub.id}`, amount, new Date(), { name: u.name, email: u.email });
       await this.activate(sub.id, `fake-${sub.id}`, amount);
       return { subscriptionId: sub.id, status: 'active' as const, redirectUrl: null };
     }
@@ -122,12 +146,26 @@ export class BillingService {
     const pay = await this.mp.getPayment(dataId);
     const sub = await this.subs.findOneBy({ id: pay.external_reference });
     if (!sub) return;
-    if (pay.status === 'approved' && pay.currency_id === 'BRL') {
-      await this.activate(sub.id, String(pay.id), Math.round(pay.transaction_amount * 100));
+    const paidCents = Math.round(pay.transaction_amount * 100);
+    if (pay.status === 'approved' && pay.status_detail === 'partially_refunded') {
+      // Estorno parcial de nota emitida: fica para substituição manual
+      await this.nfse.onReversal(String(pay.id), false, 'Estorno parcial do pagamento');
+    } else if (pay.status === 'approved' && pay.currency_id === 'BRL') {
+      // NFS-e primeiro (idempotente): se falhar, o webhook devolve 500 e o Mercado Pago reentrega o evento inteiro
+      if (paidCents >= sub.amount) {
+        const payerName = [pay.payer?.first_name, pay.payer?.last_name].filter(Boolean).join(' ') || null;
+        await this.enqueueInvoice(sub, String(pay.id), paidCents, pay.date_approved ? new Date(pay.date_approved) : new Date(),
+          { name: payerName, email: pay.payer?.email, identification: pay.payer?.identification });
+      }
+      await this.activate(sub.id, String(pay.id), paidCents);
     } else if (['rejected', 'cancelled'].includes(pay.status) && sub.status === 'pending') {
       sub.status = 'failed';
       await this.subs.save(sub);
-    } else if (['refunded', 'charged_back'].includes(pay.status) && sub.status === 'active') {
+    } else if (['refunded', 'charged_back'].includes(pay.status)) {
+      await this.nfse.onReversal(String(pay.id), true, pay.status === 'charged_back'
+        ? 'Contestação do pagamento pelo titular do cartão (chargeback)'
+        : 'Reembolso ao cliente (direito de arrependimento ou estorno)');
+      if (sub.status !== 'active') return;
       sub.status = 'canceled';
       await this.subs.save(sub);
       securityEvent('billing.revoked', { sub: sub.id, reason: pay.status });
@@ -166,7 +204,7 @@ class BillingController {
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Subscription, User])],
+  imports: [TypeOrmModule.forFeature([Subscription, User]), NfseModule],
   controllers: [BillingController],
   providers: [BillingService],
   exports: [BillingService],

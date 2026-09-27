@@ -1,12 +1,13 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api, Subject } from '../api/client';
+import AdminNfse from '../components/AdminNfse';
 import { Testimonial } from '../components/SocialProof';
 
 const emptyQ = { statement: '', A: '', B: '', C: '', D: '', E: '', correctKey: 'A', commentary: '', topicId: '', institution: '', year: '', difficulty: 'medium' };
 const emptyT = { name: '', school: '', quote: '', specialty: '', institutions: '', highlight: '', photoUrl: '', videoUrl: '', featured: false, approved: true };
 
 export default function Admin() {
-  const [tab, setTab] = useState<'q' | 't'>('q');
+  const [tab, setTab] = useState<'q' | 't' | 'n'>('q');
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [q, setQ] = useState(emptyQ);
   const [t, setT] = useState(emptyT);
@@ -45,10 +46,11 @@ export default function Admin() {
       <div className="tabs-inline">
         <button className={tab === 'q' ? 'on' : ''} onClick={() => setTab('q')}>Questões</button>
         <button className={tab === 't' ? 'on' : ''} onClick={() => setTab('t')}>Depoimentos</button>
+        <button className={tab === 'n' ? 'on' : ''} onClick={() => setTab('n')}>Notas fiscais</button>
       </div>
       {msg && <div className="notice">{msg}</div>}
 
-      {tab === 'q' ? (
+      {tab === 'n' ? <AdminNfse /> : tab === 'q' ? (
         <form className="card stack" onSubmit={saveQ}>
           <h3>Nova questão</h3>
           <div className="row">

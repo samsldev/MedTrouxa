@@ -195,6 +195,8 @@ class AccountController {
       exams: await q(`SELECT id, title, "questionIds", "durationMinutes", "startedAt", "finishedAt", score, answers FROM exams WHERE "userId" = $1`),
       studyPlans: await q(`SELECT "planId", completed, "startedAt" FROM plan_enrollments WHERE "userId" = $1`),
       subscriptions: await q(`SELECT "planId", "paymentMethod", installments, amount, status, "paidAt", "startsAt", "expiresAt" FROM subscriptions WHERE "userId" = $1`),
+      fiscalIdentity: await q(`SELECT doc_type, doc_number, updated_at FROM fiscal_identities WHERE customer_id = $1::text`),
+      invoices: await q(`SELECT status, nfse_number, access_key, amount_brl_cents, paid_at, issued_at, canceled_at FROM nfse_documents WHERE user_id = $1`),
     };
   }
 
@@ -214,6 +216,8 @@ class AccountController {
       await m.query(`DELETE FROM exams WHERE "userId" = $1`, p);
       await m.query(`DELETE FROM plan_enrollments WHERE "userId" = $1`, p);
       await m.query(`UPDATE subscriptions SET "userId" = 'deleted-user' WHERE "userId" = $1`, p);
+      // Notas fiscais emitidas são mantidas (guarda legal mínima de 5 anos); o cadastro fiscal é apagado.
+      await m.query(`DELETE FROM fiscal_identities WHERE customer_id = $1::text`, p);
       await m.query(`DELETE FROM users WHERE id = $1`, p);
     });
     await this.redis.client.zrem('ranking:xp', u.sub).catch(() => undefined);
