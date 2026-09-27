@@ -14,7 +14,7 @@ COPY . .
 RUN npm run build
 
 # nginx sem root, porta 8080
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY proxy.inc /etc/nginx/conf.d/proxy.inc
 COPY --from=build /app/dist /usr/share/nginx/html
