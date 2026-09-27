@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { api, isPlanError } from '../api/client';
 import Upsell from '../components/Upsell';
 
-interface Msg { role: 'user' | 'assistant'; content: string }
+interface Msg { role: 'user' | 'assistant'; content: string; error?: boolean }
 
 const SUGGESTIONS = [
   'Resuma o manejo da cetoacidose diabética',
@@ -28,11 +28,12 @@ export default function Coruja() {
     const next: Msg[] = [...msgs, { role: 'user', content }];
     setMsgs(next); setText(''); setBusy(true);
     try {
-      const { reply } = await api<{ reply: string }>('/ai/chat', { body: { messages: next.slice(-20) } });
+      const history = next.filter((m) => !m.error).slice(-20).map(({ role, content: text }) => ({ role, content: text }));
+      const { reply } = await api<{ reply: string }>('/ai/chat', { body: { messages: history } });
       setMsgs([...next, { role: 'assistant', content: reply }]);
     } catch (e) {
       if (isPlanError(e)) { setBlocked(e.message); setMsgs(msgs); return; }
-      setMsgs([...next, { role: 'assistant', content: `${(e as Error).message}` }]);
+      setMsgs([...next, { role: 'assistant', content: `${(e as Error).message}`, error: true }]);
     } finally { setBusy(false); }
   }
 
@@ -47,7 +48,7 @@ export default function Coruja() {
             {SUGGESTIONS.map((s) => <button key={s} className="ghost" onClick={() => send(s)}>{s}</button>)}
           </div>
         )}
-        {msgs.map((m, i) => <div key={i} className={`bubble ${m.role}`}>{m.content}</div>)}
+        {msgs.map((m, i) => <div key={i} className={`bubble ${m.role}${m.error ? ' muted' : ''}`}>{m.content}</div>)}
         {busy && <div className="bubble assistant muted">pensando...</div>}
         <div ref={end} />
       </div>

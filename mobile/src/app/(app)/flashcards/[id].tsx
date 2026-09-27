@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated, Pressable, View } from 'react-native';
 import { Button, Card, Empty, Field, Loading, Notice, Row, Screen, T } from '@/components/ui';
+import { aiConsent } from '@/lib/aiConsent';
 import { api, isPlanError } from '@/lib/api';
 import { fonts, useTheme } from '@/lib/theme';
 
@@ -46,6 +47,7 @@ export default function DeckReview() {
   }
 
   async function generate() {
+    if (!(await aiConsent.ensure())) return;
     setAiMsg('A Coruja está criando os cards…'); setAiLocked('');
     try {
       const { cards } = await api<{ cards: { front: string; back: string }[] }>('/ai/flashcards', { body: { text: aiText } });

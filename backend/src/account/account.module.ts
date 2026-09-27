@@ -16,10 +16,11 @@ import { generateRecoveryCodes, OtpService } from '../security/otp';
 import { RateLimit } from '../security/rate-limit';
 import { generateTotpSecret, otpauthUrl, verifyTotp } from '../security/totp';
 import { MfaMethod, TwoFactorService } from '../security/twofactor';
+import { IsClean } from '../security/profanity';
 
 class ProfileDto {
-  @IsOptional() @IsString() @Length(2, 120) name?: string;
-  @IsOptional() @IsString() @MaxLength(160) university?: string;
+  @IsOptional() @IsString() @Length(2, 120) @IsClean() name?: string;
+  @IsOptional() @IsString() @MaxLength(160) @IsClean() university?: string;
   @IsOptional() @IsInt() @Min(1) @Max(12) semester?: number;
 }
 class PasswordDto { @IsString() @MaxLength(128) currentPassword: string; @IsString() @MaxLength(128) newPassword: string }

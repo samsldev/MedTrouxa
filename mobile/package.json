@@ -16,12 +16,12 @@
     "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.11",
     "expo-router": "~57.0.23",
+    "expo-screen-capture": "~57.0.3",
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
     "expo-updates": "~57.0.23",
-    "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -44,7 +44,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "doctor": "expo-doctor",
-    "export:web": "expo export --platform web"
+    "export:web": "expo export --platform web",
+    "check:store": "node scripts/check-store-rules.mjs",
+    "verify": "npm run typecheck && npm run lint && npm run check:store"
   },
   "private": true
 }

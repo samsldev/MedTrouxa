@@ -1,52 +1,63 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../api/client';
 import { Logo } from '../components/Brand';
 import Footer from '../components/Footer';
 import { SITE } from '../site';
 
-const controller = SITE.legalName || 'MedTrouxa';
-const contact = SITE.email || 'o canal de suporte da plataforma';
+interface Doc { title: string; kicker: string; version: string; sections: [string, string][] }
 
-const DOCS = {
-  termos: {
-    title: 'Termos de uso', kicker: 'Jurídico',
-    sections: [
-      ['1. O serviço', 'O MedTrouxa é uma plataforma de estudos para estudantes de medicina, com questões comentadas, flashcards, simulados, cronogramas e uma tutora com inteligência artificial. O conteúdo é exclusivamente educacional e não substitui avaliação, diagnóstico ou conduta médica.'],
-      ['2. Conta', 'Você é responsável pela confidencialidade da sua senha e pelas atividades na sua conta. A conta é pessoal e intransferível; o compartilhamento de acesso pode levar à suspensão.'],
-      ['3. Planos e pagamento', 'Os planos são anuais (Arcano: 6 anos, pagamento único), pagos à vista ou parcelados em até 12x no cartão por meio do Mercado Pago. O acesso é liberado após a confirmação do pagamento. Estornos e chargebacks encerram o acesso correspondente.'],
-      ['4. Direito de arrependimento', 'Nas contratações online, você pode desistir em até 7 dias da contratação, com reembolso integral (Código de Defesa do Consumidor, art. 49), pelo contato indicado abaixo.'],
-      ['5. Uso adequado', 'É proibido copiar ou redistribuir o conteúdo em massa, tentar burlar limites técnicos, explorar falhas de segurança ou usar a plataforma para fins ilícitos. Vulnerabilidades devem ser reportadas de forma responsável ao nosso contato.'],
-      ['6. Inteligência artificial', 'As respostas da Coruja são geradas por IA e podem conter imprecisões. Confira sempre com a literatura e as diretrizes oficiais.'],
-      ['7. Contato', `Dúvidas sobre estes termos: ${contact}.`],
-    ],
-  },
-  privacidade: {
-    title: 'Política de privacidade', kicker: 'LGPD',
-    sections: [
-      ['1. Controlador', `${controller}${SITE.cnpj ? `, CNPJ ${SITE.cnpj}` : ''}, é o controlador dos dados pessoais tratados na plataforma. Contato do encarregado (DPO): ${contact}.`],
-      ['2. Dados que coletamos', 'Cadastro: nome, e-mail, faculdade e período (opcionais) e senha (armazenada apenas como hash bcrypt). Uso: questões respondidas, revisões de flashcards, simulados, cronogramas e pontuação. Pagamento: plano, valor, forma e status — os dados do cartão são tratados diretamente pelo Mercado Pago e nunca passam pelos nossos servidores. Técnicos: endereço IP e registros de acesso para segurança.'],
-      ['3. Finalidades e bases legais', 'Prestar o serviço contratado (execução de contrato); cobrança e obrigações fiscais (obrigação legal); segurança, prevenção a fraudes e abuso (legítimo interesse); comunicações sobre sua conta, como redefinição de senha (execução de contrato).'],
-      ['4. Compartilhamento', 'Mercado Pago (processamento de pagamentos), provedor de e-mail (mensagens transacionais) e, ao usar a Coruja IA, o provedor de IA recebe apenas o texto da sua pergunta — sem nome, e-mail ou identificadores. Não vendemos dados pessoais.'],
-      ['5. Ranking', 'No ranking, outros estudantes veem apenas seu primeiro nome, a inicial do sobrenome, sua faculdade (se informada) e sua pontuação.'],
-      ['6. Retenção', 'Mantemos seus dados enquanto a conta existir. Ao excluir a conta, apagamos perfil e histórico de estudos; registros de pagamento são mantidos, sem vínculo com seus dados pessoais, pelo prazo exigido pela legislação fiscal.'],
-      ['7. Seus direitos', 'Em "Minha conta" você pode corrigir seus dados, baixar uma cópia de todos eles (portabilidade), encerrar sessões em todos os dispositivos e excluir a conta. Outros pedidos (LGPD, art. 18) podem ser feitos pelo contato acima.'],
-      ['8. Segurança', 'Tráfego criptografado (HTTPS/HSTS), senhas com bcrypt, sessões com tokens de curta duração e cookies httpOnly, limites contra força bruta, banco de dados em rede isolada com réplicas e backups diários criptografados.'],
-      ['9. Cookies e análise', 'Usamos um cookie essencial de sessão (httpOnly, restrito à autenticação). Nas páginas públicas medimos visitas, rolagem e cliques com um rastreador próprio (sem terceiros e sem publicidade): sem o seu consentimento os dados são totalmente anônimos; com ele, suas visitas são ligadas por um identificador aleatório guardado no seu navegador. Endereço IP e user-agent nunca são armazenados. Você pode mudar sua escolha a qualquer momento em "Preferências de cookies", no rodapé.'],
-    ],
-  },
-};
-
-export default function Legal({ doc }: { doc: keyof typeof DOCS }) {
-  const d = DOCS[doc];
+function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="legal-page">
       <header className="checkout-top"><Link to="/"><Logo /></Link><Link to="/" className="btn btn-text">← Voltar ao início</Link></header>
-      <main className="lp-wrap narrow legal">
-        <span className="kicker">{d.kicker}</span>
-        <h1>{d.title}</h1>
-        <p className="muted">Versão 2026-09. Minuta: revise com sua assessoria jurídica antes do lançamento comercial.</p>
-        {d.sections.map(([h, t]) => <section key={h}><h2>{h}</h2><p>{t}</p></section>)}
-      </main>
+      <main className="lp-wrap narrow legal">{children}</main>
       <Footer />
     </div>
+  );
+}
+
+/** Termos e privacidade: texto servido pela API (mesma fonte dos apps). */
+export default function Legal({ doc }: { doc: 'termos' | 'privacidade' }) {
+  const [d, setD] = useState<Doc | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => { setD(null); api<Doc>(`/legal/${doc}`).then(setD).catch((e) => setError((e as Error).message)); }, [doc]);
+  return (
+    <Shell>
+      {!d ? <p className="muted">{error || 'Carregando…'}</p> : (
+        <>
+          <span className="kicker">{d.kicker}</span>
+          <h1>{d.title}</h1>
+          <p className="muted">Versão {d.version}.</p>
+          {d.sections.map(([h, t]) => <section key={h}><h2>{h}</h2><p>{t}</p></section>)}
+        </>
+      )}
+    </Shell>
+  );
+}
+
+/** Página pública de exclusão de conta (exigida pelo Google Play: acessível sem o app). */
+export function DeleteAccountInfo() {
+  return (
+    <Shell>
+      <span className="kicker">LGPD</span>
+      <h1>Excluir sua conta</h1>
+      <section>
+        <h2>Pelo app ou pelo site</h2>
+        <p>Entre na sua conta e abra <b>Minha conta → Excluir conta</b>. Confirme com a sua senha: a exclusão é imediata.
+          No app MedTrouxa (Android e iOS) o caminho é <b>Mais → Minha conta → Excluir minha conta</b>.</p>
+        <p><Link to="/login" className="btn btn-dark">Entrar para excluir</Link></p>
+      </section>
+      <section>
+        <h2>O que é apagado</h2>
+        <p>Perfil (nome, e-mail, faculdade, período), senha, verificação em duas etapas, questões respondidas, flashcards, simulados, cronogramas e pontuação no ranking.</p>
+        <h2>O que é mantido</h2>
+        <p>Registros de pagamento e notas fiscais, desvinculados dos seus dados pessoais, pelo prazo exigido pela legislação fiscal (em geral 5 anos).</p>
+      </section>
+      <section>
+        <h2>Sem acesso à conta?</h2>
+        <p>Peça a exclusão {SITE.email ? <>pelo e-mail <a href={`mailto:${SITE.email}?subject=Excluir%20minha%20conta`}>{SITE.email}</a></> : 'pelo contato de suporte'}, a partir do e-mail cadastrado. Respondemos em até 15 dias.</p>
+      </section>
+    </Shell>
   );
 }

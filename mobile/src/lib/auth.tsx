@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, refreshSession, session, User } from './api';
+import { api, lastRefreshResult, refreshSession, session, User } from './api';
 
 /** Resultado de cada etapa de autenticação: sessão pronta, confirmação de e-mail ou segundo fator. */
 export type AuthStep =
@@ -12,6 +12,9 @@ type Issued = AuthStep & { accessToken?: string; refreshToken?: string; user?: U
 interface AuthCtx {
   user: User | null;
   loading: boolean;
+  /** Há sessão guardada, mas não foi possível falar com o servidor ao abrir o app. */
+  offline: boolean;
+  retry(): void;
   login(email: string, password: string): Promise<AuthStep>;
   register(data: Record<string, unknown>): Promise<AuthStep>;
   verifyEmail(challenge: string, code: string): Promise<AuthStep>;
@@ -28,6 +31,8 @@ export const useAuth = () => useContext(Ctx);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [offline, setOffline] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   const forget = useCallback(async () => {
     await session.clear();
@@ -40,10 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session.onLost(() => { void forget(); });
     // Restaura a sessão do Keychain/Keystore ao abrir o app
     refreshSession()
-      .then((ok) => (ok ? api<User>('/auth/me').then(setUser) : undefined))
-      .catch(() => undefined)
+      .then((ok) => {
+        setOffline(!ok && lastRefreshResult() === 'offline');
+        return ok ? api<User>('/auth/me').then(setUser) : undefined;
+      })
+      .catch(() => setOffline(true))
       .finally(() => setLoading(false));
-  }, [forget]);
+  }, [forget, attempt]);
 
   const handle = useCallback(async (r: Issued): Promise<AuthStep> => {
     if (r.status === 'ok' && r.accessToken && r.user) {
@@ -54,7 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthCtx>(() => ({
-    user, loading, setUser, forget,
+    user, loading, offline, setUser, forget,
+    retry: () => { setLoading(true); setAttempt((n) => n + 1); },
     login: async (email, password) => handle(await api('/auth/login', { body: { email, password } })),
     register: async (data) => handle(await api('/auth/register', { body: data })),
     verifyEmail: async (challenge, code) => handle(await api('/auth/verify-email', { body: { challenge, code } })),
@@ -65,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       else await api('/auth/logout', { method: 'POST', body: { refreshToken } }).catch(() => undefined);
       await forget();
     },
-  }), [user, loading, handle, forget]);
+  }), [user, loading, offline, handle, forget]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

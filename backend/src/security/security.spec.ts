@@ -38,7 +38,9 @@ describe('webhook Mercado Pago', () => {
   it('rejeita assinatura adulterada, de outro id, ausente ou antiga (replay)', () => {
     const ts = String(Date.now());
     expect(mp.verifySignature(sign('123', 'req-1', ts), 'req-1', '999')).toBe(false);
-    expect(mp.verifySignature(sign('123', 'req-1', ts).replace(/.$/, '0'), 'req-1', '123')).toBe(false);
+    // troca o último hex por outro garantidamente diferente (antes, 1 em 16 vezes ele já era '0' e nada mudava)
+    const tampered = sign('123', 'req-1', ts).replace(/.$/, (ch) => (ch === '0' ? '1' : '0'));
+    expect(mp.verifySignature(tampered, 'req-1', '123')).toBe(false);
     expect(mp.verifySignature(undefined, 'req-1', '123')).toBe(false);
     const old = String(Date.now() - 60 * 60 * 1000);
     expect(mp.verifySignature(sign('123', 'req-1', old), 'req-1', '123')).toBe(false);

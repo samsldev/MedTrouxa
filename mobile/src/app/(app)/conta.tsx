@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Share } from 'react-native';
 import { Button, Card, Field, Notice, Row, Screen, T } from '@/components/ui';
+import { aiConsent } from '@/lib/aiConsent';
 import { api, User } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -11,6 +12,8 @@ export default function Conta() {
   const [del, setDel] = useState('');
   const [msg, setMsg] = useState<Record<string, { text: string; tone: 'ok' | 'error' }>>({});
   const [busy, setBusy] = useState('');
+  const [aiAllowed, setAiAllowed] = useState(false);
+  useEffect(() => { void aiConsent.get().then(setAiAllowed); }, []);
   const say = (k: string, text: string, tone: 'ok' | 'error' = 'ok') => setMsg((m) => ({ ...m, [k]: { text, tone } }));
   const run = async (k: string, fn: () => Promise<void>) => { setBusy(k); try { await fn(); } catch (e) { say(k, (e as Error).message, 'error'); } finally { setBusy(''); } };
 
@@ -67,6 +70,14 @@ export default function Conta() {
         {note('export')}
         <Button variant="outline" icon="arrow" title="Exportar meus dados" loading={busy === 'export'} onPress={exportData} />
         <Button variant="outline" icon="logout" title="Sair de todos os dispositivos" onPress={() => void logout({ everywhere: true })} />
+      </Card>
+
+      <Card>
+        <T weight="bold">Coruja IA</T>
+        <T muted size={14}>{aiAllowed
+          ? 'Você permitiu enviar o texto das suas perguntas à Anthropic (provedora da IA), sem seus dados pessoais.'
+          : 'Você ainda não permitiu o uso da Coruja IA. A permissão é pedida no primeiro uso.'}</T>
+        {aiAllowed && <Button variant="outline" icon="lock" title="Revogar permissão da IA" onPress={() => void aiConsent.revoke().then(() => setAiAllowed(false))} />}
       </Card>
 
       <Card>

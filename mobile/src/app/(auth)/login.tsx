@@ -1,10 +1,9 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import VerifyStep from '@/components/VerifyStep';
 import { Button, Check, Field, Kicker, Logo, Notice, Row, Screen, T, Title } from '@/components/ui';
 import { AuthStep, useAuth } from '@/lib/auth';
-import { openWeb } from '@/lib/links';
 import { useTheme } from '@/lib/theme';
 
 export default function Login() {
@@ -58,8 +57,8 @@ export default function Login() {
                   <T size={14}>Li e aceito os <T size={14} weight="semi" style={{ color: c.goldText }} >Termos de uso</T> e a <T size={14} weight="semi" style={{ color: c.goldText }}>Política de privacidade</T>.</T>
                 </Check>
                 <Row gap={16} style={{ marginLeft: 32 }}>
-                  <Button small block={false} variant="text" title="Ler os termos" onPress={() => openWeb('/termos')} />
-                  <Button small block={false} variant="text" title="Ler a política" onPress={() => openWeb('/privacidade')} />
+                  <Button small block={false} variant="text" title="Ler os termos" onPress={() => router.push('/legal/termos')} />
+                  <Button small block={false} variant="text" title="Ler a política" onPress={() => router.push('/legal/privacidade')} />
                 </Row>
               </>
             )}

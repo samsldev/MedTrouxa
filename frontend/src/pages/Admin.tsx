@@ -9,13 +9,14 @@ const Heatmap = lazy(() => import('../components/admin/Heatmap'));
 const Visitors = lazy(() => import('../components/admin/Visitors'));
 const Subscriptions = lazy(() => import('../components/admin/Subscriptions'));
 const Coupons = lazy(() => import('../components/admin/Coupons'));
+const Reports = lazy(() => import('../components/admin/Reports'));
 const Support = lazy(() => import('../components/admin/Support'));
 const Audit = lazy(() => import('../components/admin/Audit'));
 const Content = lazy(() => import('../components/admin/Content'));
 
 const TABS = [
   ['overview', 'Visão geral'], ['marketing', 'Marketing'], ['heatmap', 'Mapas de calor'], ['visitors', 'Visitantes'],
-  ['subscriptions', 'Assinaturas'], ['coupons', 'Cupons'], ['support', 'Suporte'], ['nfse', 'Notas fiscais'], ['content', 'Conteúdo'], ['audit', 'Auditoria'],
+  ['subscriptions', 'Assinaturas'], ['coupons', 'Cupons'], ['support', 'Suporte'], ['reports', 'Denúncias'], ['nfse', 'Notas fiscais'], ['content', 'Conteúdo'], ['audit', 'Auditoria'],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 const readTab = (): Tab => { const h = location.hash.slice(1); return (TABS.find(([k]) => k === h)?.[0] ?? 'overview'); };
@@ -59,6 +60,7 @@ export default function Admin() {
         {tab === 'subscriptions' && <Subscriptions />}
         {tab === 'coupons' && <Coupons />}
         {tab === 'support' && <Support />}
+        {tab === 'reports' && <Reports />}
         {tab === 'nfse' && <AdminNfse />}
         {tab === 'content' && <Content />}
         {tab === 'audit' && <Audit />}

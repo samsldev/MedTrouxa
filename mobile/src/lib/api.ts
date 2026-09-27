@@ -45,21 +45,28 @@ async function parse(res: Response) {
   return data;
 }
 
+export type RefreshResult = 'ok' | 'none' | 'offline';
+let lastRefresh: RefreshResult = 'none';
+/** Resultado da última renovação (distingue "sem sessão" de "sem internet"). */
+export const lastRefreshResult = () => lastRefresh;
+
 /** Troca o refresh token por uma nova sessão (rotação: o antigo deixa de valer). Uma chamada por vez. */
 export function refreshSession(): Promise<boolean> {
   refreshing ??= (async () => {
     const rt = await secure.get(RT_KEY);
-    if (!rt) return false;
+    if (!rt) { lastRefresh = 'none'; return false; }
     try {
       const res = await fetch(`${API_URL}/auth/refresh`, {
         method: 'POST', headers: { ...baseHeaders(), 'content-type': 'application/json' }, body: JSON.stringify({ refreshToken: rt }),
       });
-      if (res.status === 401 || res.status === 403) { await session.clear(); return false; }
+      if (res.status === 401 || res.status === 403) { await session.clear(); lastRefresh = 'none'; return false; }
       const data = await parse(res);
       await session.save(data);
+      lastRefresh = 'ok';
       return true;
     } catch {
-      return false; // sem rede: mantém o refresh token para tentar de novo
+      lastRefresh = 'offline'; // sem rede ou servidor fora: mantém o refresh token para tentar de novo
+      return false;
     }
   })().finally(() => { refreshing = null; });
   return refreshing;

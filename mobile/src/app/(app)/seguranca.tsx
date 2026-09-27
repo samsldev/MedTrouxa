@@ -1,4 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
+import * as ScreenCapture from 'expo-screen-capture';
 import { useEffect, useState } from 'react';
 import { Image, Linking, Share, View } from 'react-native';
 import { Icon } from '@/components/Icon';
@@ -36,6 +37,12 @@ function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone(): void }) {
 
 export default function Seguranca() {
   const { c } = useTheme();
+  // Segredo do 2FA e códigos de recuperação: sem print, gravação ou miniatura no multitarefa (MASVS-PLATFORM)
+  ScreenCapture.usePreventScreenCapture('seguranca');
+  useEffect(() => {
+    void ScreenCapture.enableAppSwitcherProtectionAsync(0.9).catch(() => undefined);
+    return () => { void ScreenCapture.disableAppSwitcherProtectionAsync().catch(() => undefined); };
+  }, []);
   const [sec, setSec] = useState<Security | null>(null);
   const [flow, setFlow] = useState<Flow>({ kind: 'idle' });
   const [code, setCode] = useState('');

@@ -4,7 +4,6 @@ import { Alert, View } from 'react-native';
 import { Card, Header, ListItem, Pill, Row, Screen, T } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { openWeb } from '@/lib/links';
 import { useTheme } from '@/lib/theme';
 import { useLoad } from '@/lib/useLoad';
 
@@ -40,8 +39,8 @@ export default function Mais() {
         <ListItem icon="shield" title="Segurança" subtitle="Verificação em duas etapas" onPress={() => router.push('/seguranca')} />
       </Card>
       <Card style={{ paddingVertical: 2, gap: 0 }}>
-        <ListItem icon="doc" title="Termos de uso" onPress={() => openWeb('/termos')} />
-        <ListItem icon="lock" title="Política de privacidade" onPress={() => openWeb('/privacidade')} />
+        <ListItem icon="doc" title="Termos de uso" onPress={() => router.push('/legal/termos')} />
+        <ListItem icon="lock" title="Política de privacidade" onPress={() => router.push('/legal/privacidade')} />
         <ListItem icon="logout" title="Sair" danger right={<View />} onPress={() => Alert.alert('Sair da conta?', undefined, [
           { text: 'Cancelar', style: 'cancel' }, { text: 'Sair', style: 'destructive', onPress: () => void logout() },
         ])} />

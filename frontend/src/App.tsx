@@ -15,7 +15,7 @@ import ExamPage from './pages/ExamPage';
 import Exams from './pages/Exams';
 import Flashcards from './pages/Flashcards';
 import Landing from './pages/Landing';
-import Legal from './pages/Legal';
+import Legal, { DeleteAccountInfo } from './pages/Legal';
 import Login from './pages/Login';
 import Plans from './pages/Plans';
 import Questions from './pages/Questions';
@@ -87,6 +87,7 @@ export default function App() {
       <Route path="/redefinir-senha" element={<ResetPassword />} />
       <Route path="/termos" element={<Legal doc="termos" />} />
       <Route path="/privacidade" element={<Legal doc="privacidade" />} />
+      <Route path="/excluir-conta" element={<DeleteAccountInfo />} />
       <Route element={<Private bare />}>
         <Route path="checkout/:planId" element={<Checkout />} />
         <Route path="pagamento/:id" element={<PaymentReturn />} />

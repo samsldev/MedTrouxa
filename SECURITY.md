@@ -45,7 +45,11 @@ Para reportar uma vulnerabilidade, escreva para o contato de suporte da platafor
 
 - Refresh token rotativo no Keychain/Keystore (`AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`, fora de backup), access token só em memória.
 - Modo app (`x-client: mobile`, token no corpo) só é aceito sem `Origin` em produção: navegadores não conseguem usá-lo para escapar do cookie httpOnly.
-- Sem compras no app; exclusão de conta disponível no próprio app (exigência da App Store).
+- Sem compras no app; exclusão de conta no próprio app (App Store 5.1.1(v)) e página pública `/excluir-conta` (Google Play).
+- Build de loja só com API HTTPS (falha no build); Android release sem texto puro; ATS sem cargas arbitrárias.
+- Tela de Segurança (segredo do 2FA, códigos de recuperação) bloqueia print/gravação e a miniatura do multitarefa.
+- Permissão explícita antes de enviar texto à IA de terceiros (App Store 5.1.2(i)); denúncia de respostas da IA e de nomes do ranking, com fila de moderação no console; filtro de termos ofensivos em nome/faculdade.
+- Matriz completa em `mobile/COMPLIANCE.md`; `npm run verify` (no app) barra preços, compras, links externos, permissões sensíveis e rastreamento.
 
 ## Console administrativo
 

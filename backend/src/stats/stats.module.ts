@@ -3,6 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { CurrentUser, JwtUser } from '../common/auth';
 import { RedisService } from '../redis/redis.module';
+import { rankingRef } from '../moderation/ref';
 
 @Controller('stats')
 class StatsController {
@@ -42,7 +43,8 @@ class StatsController {
     const short = (n: string) => { const [a, ...r] = n.trim().split(/\s+/); return r.length ? `${a} ${r[r.length - 1][0]}.` : a; };
     return top.filter((t) => byId.has(t.userId)).map((t, i) => {
       const x = byId.get(t.userId)!;
-      return { position: i + 1, xp: t.xp, name: short(x.name), university: x.university, me: t.userId === u.sub };
+      const me = t.userId === u.sub;
+      return { position: i + 1, xp: t.xp, name: short(x.name), university: x.university, me, ...(me ? {} : { ref: rankingRef(t.userId) }) };
     });
   }
 }

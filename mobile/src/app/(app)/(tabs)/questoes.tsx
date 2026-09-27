@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Filters, { FilterValue } from '@/components/Filters';
 import QuestionCard from '@/components/QuestionCard';
-import { Empty, Header, Notice, T } from '@/components/ui';
+import { CONTENT_MAX, Empty, Header, Notice, T } from '@/components/ui';
 import { api, Question } from '@/lib/api';
 import { useTheme } from '@/lib/theme';
 
@@ -57,7 +57,7 @@ export default function Questoes() {
         data={items}
         keyExtractor={(q) => String(q.id)}
         renderItem={({ item, index }) => <QuestionCard q={item} index={index + 1} />}
-        contentContainerStyle={{ padding: 18, gap: 14 }}
+        contentContainerStyle={{ padding: 18, gap: 14, width: '100%', maxWidth: CONTENT_MAX, alignSelf: 'center' }}
         onEndReached={more}
         onEndReachedThreshold={0.6}
         refreshing={refreshing}

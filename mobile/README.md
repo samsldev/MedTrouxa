@@ -25,7 +25,7 @@ só aquele módulo em Swift/Kotlin com **Expo Modules**, sem reescrever o app.
 - Início (painel), banco de questões com filtros e rolagem infinita, explicação da Coruja IA
 - Simulados com cronômetro, respostas salvas no aparelho e envio automático no fim do tempo
 - Flashcards com repetição espaçada (cartão que vira), criação manual e com IA
-- Coruja IA (chat), Cronogramas, Ranking
+- Coruja IA (chat) com permissão explícita no 1º uso e botão de denúncia em cada resposta; Cronogramas; Ranking com denúncia de nomes
 - Minha conta: dados, troca de senha, exportar dados (LGPD), sair de todos os dispositivos, **excluir conta** (obrigatório na App Store)
 - Segurança: ativar/desativar 2FA; no celular o botão **"Abrir no app autenticador"** cadastra o MedTrouxa direto (sem precisar escanear)
 - Tema claro e escuro automáticos, fontes e cores do site, acessibilidade (rótulos, papéis e estados para leitores de tela)
@@ -68,6 +68,7 @@ eas init                               # preenche o projectId em app.json
 eas build --profile preview --platform android   # APK para testar
 eas build --profile production --platform all    # AAB (Play) + IPA (App Store)
 eas submit --profile production --platform all
+eas update:configure                   # 1 vez: liga o OTA (sem isso o expo-updates fica desativado no build)
 eas update --channel production -m "correção X"  # atualização OTA (só JS/estilos)
 ```
 
@@ -84,9 +85,13 @@ Configure no servidor: `MOBILE_MIN_VERSION`, `MOBILE_APP_STORE_URL`, `MOBILE_PLA
 
 ### Checklist das lojas
 
+A matriz completa de conformidade (App Store, Google Play e OWASP MASVS), as respostas dos formulários de privacidade
+e o texto de notas para o revisor estão em **[COMPLIANCE.md](COMPLIANCE.md)**. Rode `npm run verify` antes de cada build.
+
+
 - **Conta de teste para os revisores** (Apple e Google exigem): crie um aluno com plano ativo (cortesia pelo console admin) e informe e-mail/senha na submissão. Deixe essa conta **sem 2FA**.
-- **Apple — App Privacy**: dados coletados = e-mail, nome, conteúdo do usuário (respostas, cards), vinculados à conta, **sem rastreamento**. O manifesto de privacidade já está em `app.json`.
-- **Google — Segurança dos dados**: mesmos dados; criptografados em trânsito; o usuário pode pedir exclusão (há exclusão no app). Informe também a URL de exclusão (`/privacidade`).
+- **Apple — App Privacy** e **Google — Segurança dos dados**: respostas prontas em `COMPLIANCE.md`.
+- URL pública de exclusão de conta (Google Play): `https://medtrouxa.com.br/excluir-conta`.
 - URL da política de privacidade: `https://medtrouxa.com.br/privacidade`. URL de suporte: página ou e-mail de contato.
 - Classificação etária: educação, sem conteúdo sensível. Criptografia: só HTTPS padrão (`usesNonExemptEncryption: false` já configurado).
 - Ícones e splash em `assets/` (gerados da marca; o ícone iOS não tem transparência, como a Apple exige).

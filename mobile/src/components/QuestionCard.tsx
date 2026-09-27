@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { aiConsent } from '@/lib/aiConsent';
 import { api, isPlanError, Question } from '@/lib/api';
 import { useTheme } from '@/lib/theme';
+import { useReport } from './ReportSheet';
 import { Button, Card, Notice, Pill, Row, T } from './ui';
 
 interface Result { correct: boolean; correctKey: string; commentary: string }
@@ -48,6 +50,7 @@ export default function QuestionCard({ q, index }: { q: Question; index?: number
   const [locked, setLocked] = useState<string | null>(null);
   const [aiLocked, setAiLocked] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [report, reportSheet] = useReport();
 
   async function answer() {
     if (!chosen) return;
@@ -60,14 +63,16 @@ export default function QuestionCard({ q, index }: { q: Question; index?: number
   }
 
   async function explain() {
+    if (!(await aiConsent.ensure())) return;
     setAiBusy(true);
     try { setAi((await api<{ reply: string }>(`/ai/explain/${q.id}`, { body: {} })).reply); }
-    catch (e) { if (isPlanError(e)) setAiLocked(e.message); else setAi((e as Error).message); }
+    catch (e) { if (isPlanError(e)) setAiLocked(e.message); else setError((e as Error).message); }
     finally { setAiBusy(false); }
   }
 
   return (
     <Card>
+      {reportSheet}
       <QuestionMeta q={q} index={index} />
       <T size={16} selectable style={{ lineHeight: 25 }}>{q.statement}</T>
       <View style={{ gap: 8 }} accessibilityRole="radiogroup">
@@ -85,7 +90,17 @@ export default function QuestionCard({ q, index }: { q: Question; index?: number
           <T size={15} selectable>{result.commentary}</T>
           {!ai && !aiLocked && <Button variant="outline" icon="owl" title={aiBusy ? 'A Coruja está pensando…' : 'Explicar com a Coruja'} loading={aiBusy} onPress={explain} />}
           {aiLocked && <Notice tone="lock">{aiLocked}</Notice>}
-          {ai && <View style={{ backgroundColor: c.surface, borderRadius: 10, padding: 12, borderLeftWidth: 3, borderLeftColor: c.gold }}><T size={15} selectable>{ai}</T></View>}
+          {ai && (
+            <View style={{ backgroundColor: c.surface, borderRadius: 10, padding: 12, borderLeftWidth: 3, borderLeftColor: c.gold, gap: 8 }}>
+              <T size={15} selectable>{ai}</T>
+              <Row style={{ justifyContent: 'space-between' }}>
+                <T size={11} muted style={{ flex: 1 }}>Gerado por IA. Confira na literatura.</T>
+                <Pressable onPress={() => report({ kind: 'ai_reply', content: ai })} hitSlop={8} accessibilityRole="button" accessibilityLabel="Denunciar esta resposta">
+                  <T size={12} weight="semi" muted>Denunciar</T>
+                </Pressable>
+              </Row>
+            </View>
+          )}
         </View>
       )}
     </Card>

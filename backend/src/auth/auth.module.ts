@@ -18,6 +18,7 @@ import { hashPassword, passwordProblem, verifyPassword } from '../security/passw
 import { OtpService } from '../security/otp';
 import { RateLimit } from '../security/rate-limit';
 import { MfaMethod, TwoFactorService } from '../security/twofactor';
+import { IsClean } from '../security/profanity';
 
 export const TERMS_VERSION = '2026-09';
 const ACCESS_TTL = '15m';
@@ -39,10 +40,10 @@ const LOCK_MAX_FAILS = 5;
 const LOCK_WINDOW_SEC = 15 * 60;
 
 class RegisterDto {
-  @IsString() @Length(2, 120) name: string;
+  @IsString() @Length(2, 120) @IsClean() name: string;
   @IsEmail() @MaxLength(254) email: string;
   @IsString() @MaxLength(128) password: string;
-  @IsOptional() @IsString() @MaxLength(160) university?: string;
+  @IsOptional() @IsString() @MaxLength(160) @IsClean() university?: string;
   @IsOptional() @IsInt() @Min(1) @Max(12) semester?: number;
   @IsBoolean() @Equals(true, { message: 'É preciso aceitar os Termos de uso e a Política de privacidade' }) acceptTerms: boolean;
 }

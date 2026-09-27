@@ -9,6 +9,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FOIL, fonts, radius, useTheme } from '@/lib/theme';
 import { Icon, IconName, Mark } from './Icon';
 
+/** Largura máxima do conteúdo (tablets e paisagem). */
+export const CONTENT_MAX = 720;
+
 // ---------------- tipografia ----------------
 export function T({ children, style, muted, size = 15, weight = 'regular', center, numberOfLines, selectable, accessibilityLabel }: {
   children: ReactNode; accessibilityLabel?: string; style?: StyleProp<TextStyle>; muted?: boolean; size?: number; weight?: 'regular' | 'medium' | 'semi' | 'bold'; center?: boolean; numberOfLines?: number; selectable?: boolean;
@@ -53,14 +56,16 @@ export function Screen({ children, scroll = true, refreshing, onRefresh, padded 
 }) {
   const { c } = useTheme();
   const pad = padded ? { paddingHorizontal: 18, paddingTop: 12, paddingBottom: 32 } : undefined;
+  // Tablets / paisagem: coluna central legível
+  const column = { width: '100%' as const, maxWidth: CONTENT_MAX, alignSelf: 'center' as const };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={edges}>
       {scroll ? (
-        <ScrollView contentContainerStyle={[pad, { gap: 14 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
+        <ScrollView contentContainerStyle={[pad, column, { gap: 14 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
           refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={c.gold} colors={[c.gold]} /> : undefined}>
           {children}
         </ScrollView>
-      ) : <View style={[{ flex: 1 }, pad]}>{children}</View>}
+      ) : <View style={[{ flex: 1 }, pad, column]}>{children}</View>}
       {footer}
     </SafeAreaView>
   );

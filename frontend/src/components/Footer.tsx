@@ -22,7 +22,7 @@ export default function Footer() {
     ['Empresa', [
       ...(SITE.email ? [['Contato', `mailto:${SITE.email}`] as [string, string]] : []),
       ...(wa ? [['Falar com suporte', wa] as [string, string]] : []),
-      ['Termos de uso', '/termos'], ['Política de privacidade', '/privacidade'],
+      ['Termos de uso', '/termos'], ['Política de privacidade', '/privacidade'], ['Excluir conta', '/excluir-conta'],
     ]],
   ];
 
