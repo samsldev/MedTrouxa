@@ -22,11 +22,11 @@ export default function Dashboard() {
 
   return (
     <>
-      <h1>Olá, {user?.name.split(' ')[0]} 👋</h1>
+      <div className="page-head"><span className="kicker">Seu painel</span><h1>Olá, <em>{user?.name.split(' ')[0]}</em></h1></div>
       <div className="tiles">
         <div className="tile"><small>Questões resolvidas</small><b>{s.answered}</b></div>
         <div className="tile"><small>Aproveitamento</small><b>{pct(s.correct, s.answered)}%</b></div>
-        <div className="tile"><small>Sequência</small><b>🔥 {s.streak} dia(s)</b></div>
+        <div className="tile"><small>Sequência</small><b>{s.streak} {s.streak === 1 ? 'dia' : 'dias'}</b></div>
         <div className="tile"><small>XP</small><b>{s.xp}</b></div>
         <div className="tile"><small>Flashcards p/ revisar</small><b>{s.cards.due}</b></div>
         <div className="tile"><small>Simulados · média</small><b>{s.exams.done} · {s.exams.avgScore}%</b></div>

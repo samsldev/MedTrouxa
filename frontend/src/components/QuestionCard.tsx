@@ -19,7 +19,7 @@ export default function QuestionCard({ q, index }: { q: Question; index?: number
   async function explain() {
     setAiBusy(true);
     try { setAi((await api<{ reply: string }>(`/ai/explain/${q.id}`, { body: {} })).reply); }
-    catch (e) { setAi(`⚠️ ${(e as Error).message}`); }
+    catch (e) { setAi(`${(e as Error).message}`); }
     finally { setAiBusy(false); }
   }
 
@@ -49,9 +49,9 @@ export default function QuestionCard({ q, index }: { q: Question; index?: number
         <button className="primary" disabled={!chosen} onClick={answer}>Responder</button>
       ) : (
         <div className={`feedback ${result.correct ? 'ok' : 'ko'}`}>
-          <strong>{result.correct ? '✅ Acertou!' : `❌ Errou — gabarito: ${result.correctKey}`}</strong>
+          <strong>{result.correct ? 'Acertou.' : `Errou — gabarito: ${result.correctKey}`}</strong>
           <p>{result.commentary}</p>
-          <button className="ghost" onClick={explain} disabled={aiBusy}>{aiBusy ? 'A Coruja está pensando...' : '🦉 Explicar com a Coruja'}</button>
+          <button className="ghost" onClick={explain} disabled={aiBusy}>{aiBusy ? 'A Coruja está pensando...' : 'Explicar com a Coruja'}</button>
           {ai && <div className="ai-box">{ai}</div>}
         </div>
       )}

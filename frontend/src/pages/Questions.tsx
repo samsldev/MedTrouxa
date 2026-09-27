@@ -17,7 +17,7 @@ export default function Questions() {
   const pages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
   return (
     <>
-      <h1>Banco de questões</h1>
+      <div className="page-head"><span className="kicker">Prática</span><h1>Banco de questões</h1></div>
       <Filters value={filters} onChange={(v) => { setFilters(v); setPage(1); }} />
       <p className="muted">{data?.total ?? 0} questões encontradas</p>
       {data?.items.map((q, i) => <QuestionCard key={`${q.id}-${page}`} q={q} index={(page - 1) * 10 + i + 1} />)}

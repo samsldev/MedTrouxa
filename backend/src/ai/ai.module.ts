@@ -8,6 +8,8 @@ import { ArrayMaxSize, IsArray, IsIn, IsString, MaxLength, ValidateNested } from
 import { Repository } from 'typeorm';
 import { CurrentUser, JwtUser } from '../common/auth';
 import { Question } from '../database/entities';
+import { BillingModule, BillingService } from '../billing/billing.module';
+import { planById } from '../billing/plans';
 import { RedisService } from '../redis/redis.module';
 
 const SYSTEM = `Você é a Coruja, tutora de medicina do MedTrouxa. Responda em português do Brasil,
@@ -21,13 +23,15 @@ class GenerateDto { @IsString() @MaxLength(8000) text: string }
 
 @Injectable()
 class AiService {
-  constructor(private redis: RedisService) {}
+  constructor(private redis: RedisService, private billing: BillingService) {}
 
   private async rateLimit(userId: string) {
     const key = `ai:rl:${userId}:${new Date().toISOString().slice(0, 13)}`;
     const n = await this.redis.client.incr(key).catch(() => 0);
     if (n === 1) await this.redis.client.expire(key, 3600).catch(() => undefined);
-    if (n > 30) throw new HttpException('Limite de 30 mensagens por hora atingido', HttpStatus.TOO_MANY_REQUESTS);
+    const sub = await this.billing.active(userId);
+    const limit = sub ? planById(sub.planId)?.aiPerHour ?? 10 : 10;
+    if (n > limit) throw new HttpException(`Limite de ${limit} mensagens por hora do seu plano atingido`, HttpStatus.TOO_MANY_REQUESTS);
   }
 
   async complete(userId: string, messages: { role: 'user' | 'assistant'; content: string }[], maxTokens = 1500) {
@@ -79,5 +83,5 @@ class AiController {
   }
 }
 
-@Module({ imports: [TypeOrmModule.forFeature([Question])], controllers: [AiController], providers: [AiService] })
+@Module({ imports: [TypeOrmModule.forFeature([Question]), BillingModule], controllers: [AiController], providers: [AiService] })
 export class AiModule {}

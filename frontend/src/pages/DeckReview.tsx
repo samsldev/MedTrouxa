@@ -42,8 +42,8 @@ export default function DeckReview() {
     try {
       const { cards } = await api<{ cards: { front: string; back: string }[] }>('/ai/flashcards', { body: { text: aiText } });
       for (const c of cards) await api(`/flashcards/decks/${id}/cards`, { body: c });
-      setAiMsg(`${cards.length} cards criados pela Coruja 🦉`); setAiText(''); load();
-    } catch (e) { setAiMsg(`⚠️ ${(e as Error).message}`); }
+      setAiMsg(`${cards.length} cards criados pela Coruja`); setAiText(''); load();
+    } catch (e) { setAiMsg(`${(e as Error).message}`); }
   }
 
   if (!deck) return <div className="center">Carregando...</div>;
@@ -53,7 +53,7 @@ export default function DeckReview() {
   return (
     <>
       <Link to="/flashcards" className="link">← Baralhos</Link>
-      <h1>{deck.name}</h1>
+      <h1 className="mt">{deck.name}</h1>
       <p className="muted">{deck.cards.length} cards · {reviewed} revisados nesta sessão</p>
 
       {card ? (
@@ -62,7 +62,7 @@ export default function DeckReview() {
           {!flipped && <small className="muted">clique para ver a resposta</small>}
         </div>
       ) : (
-        <div className="card center">🎉 Nenhum card pendente neste baralho. Volte mais tarde!</div>
+        <div className="card center">Nenhum card pendente neste baralho. Volte mais tarde!</div>
       )}
       {card && flipped && (
         <div className="grades">
@@ -79,7 +79,7 @@ export default function DeckReview() {
             <button className="primary">Adicionar</button>
           </form>
           <div className="card">
-            <h3>🦉 Gerar cards com IA</h3>
+            <h3>Gerar cards com a Coruja</h3>
             <textarea rows={6} placeholder="Cole um resumo ou trecho de aula..." value={aiText} onChange={(e) => setAiText(e.target.value)} />
             <button className="primary" disabled={!aiText.trim()} onClick={generate}>Gerar flashcards</button>
             {aiMsg && <p className="muted">{aiMsg}</p>}

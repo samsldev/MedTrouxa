@@ -8,6 +8,8 @@
 x-pg-common: &pg-common
   image: bitnamilegacy/postgresql-repmgr:17
   restart: unless-stopped
+  # /tmp em memória: evita PID file velho do repmgrd travar o nó após um restart do container
+  tmpfs: [/tmp]
   healthcheck:
     test: ["CMD-SHELL", "PGPASSWORD=$$POSTGRESQL_PASSWORD pg_isready -U $$POSTGRESQL_USERNAME -d $$POSTGRESQL_DATABASE -h 127.0.0.1"]
     interval: 10s

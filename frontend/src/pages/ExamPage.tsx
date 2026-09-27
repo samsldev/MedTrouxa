@@ -41,7 +41,7 @@ export default function ExamPage() {
     <>
       <Link to="/simulados" className="link">← Simulados</Link>
       <div className="exam-head">
-        <h1>{exam.title}</h1>
+        <h1 className="mt">{exam.title}</h1>
         {done ? <div className="score">Nota: {exam.score}%</div> : <div className={`timer ${left < 60000 ? 'late' : ''}`}>⏱️ {mm}:{ss}</div>}
       </div>
       {exam.questions.map((q, i) => {

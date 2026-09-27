@@ -8,10 +8,10 @@ export default function Ranking() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   useEffect(() => { api<Row[]>('/stats/ranking').then(setRows); }, []);
-  const medal = (p: number) => ['🥇', '🥈', '🥉'][p - 1] ?? p;
+  const medal = (p: number) => <span className={`medal m${p}`}>{p}</span>;
   return (
     <>
-      <h1>Ranking de XP</h1>
+      <div className="page-head"><span className="kicker">Comunidade</span><h1>Ranking de XP</h1></div>
       <p className="muted">Acerto = 10 XP · questão respondida = 2 XP · card revisado = 2 XP · tarefa do cronograma = 5 XP</p>
       <table className="table">
         <thead><tr><th>#</th><th>Estudante</th><th>Faculdade</th><th>XP</th></tr></thead>

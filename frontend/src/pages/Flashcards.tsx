@@ -19,7 +19,7 @@ export default function Flashcards() {
 
   return (
     <>
-      <h1>Flashcards</h1>
+      <div className="page-head"><span className="kicker">Memória</span><h1>Flashcards</h1></div>
       <p className="muted">Repetição espaçada (SM-2): cada card volta no momento certo para fixar de vez.</p>
       <form className="row" onSubmit={create}>
         <input placeholder="Nome do novo baralho" value={name} onChange={(e) => setName(e.target.value)} />

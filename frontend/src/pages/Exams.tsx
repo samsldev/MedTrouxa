@@ -28,7 +28,7 @@ export default function Exams() {
 
   return (
     <>
-      <h1>Simulados</h1>
+      <div className="page-head"><span className="kicker">Treino</span><h1>Simulados</h1></div>
       <form className="card" onSubmit={create}>
         <h3>Montar simulado</h3>
         <Filters value={filters} onChange={setFilters} showStatus={false} />
@@ -38,7 +38,7 @@ export default function Exams() {
           <label>Tempo (min) <input type="number" min={5} max={300} value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: +e.target.value })} /></label>
         </div>
         {error && <div className="error">{error}</div>}
-        <button className="primary">Começar ⏱️</button>
+        <button className="primary">Começar simulado</button>
       </form>
       <h3>Histórico</h3>
       <table className="table">

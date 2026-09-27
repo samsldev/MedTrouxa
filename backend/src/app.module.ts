@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { InjectDataSource, TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { AiModule } from './ai/ai.module';
+import { BillingModule } from './billing/billing.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtGuard, Public } from './common/auth';
 import { dataSourceOptions } from './database/data-source';
@@ -31,7 +32,7 @@ class HealthController {
   imports: [
     TypeOrmModule.forRootAsync({ useFactory: dataSourceOptions }),
     JwtModule.register({ global: true, secret: process.env.JWT_SECRET ?? 'dev-secret', signOptions: { expiresIn: '7d' } }),
-    RedisModule, AuthModule, SubjectsModule, QuestionsModule, FlashcardsModule, ExamsModule, StudyPlansModule, StatsModule, AiModule,
+    RedisModule, AuthModule, SubjectsModule, QuestionsModule, FlashcardsModule, ExamsModule, StudyPlansModule, StatsModule, AiModule, BillingModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtGuard }],

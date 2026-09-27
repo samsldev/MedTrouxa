@@ -17,6 +17,26 @@ tutora com IA e ranking — da faculdade ao ENAMED e à residência.
 | **Coruja (IA)** | Chat tutor e "explicar questão" (usa a API do Claude; defina `ANTHROPIC_API_KEY`). Limite de 30 req/h por usuário via Redis. |
 | **Desempenho** | Aproveitamento geral e por área, atividade dos últimos 14 dias, sequência de dias (streak), XP. |
 | **Ranking** | Ranking global de XP (sorted set no Redis). |
+| **Landing + Planos** | Página de vendas, 3 assinaturas com parcelamento em até 12x e checkout (Pix ou cartão). |
+
+## Planos
+
+| Plano | Parcelado | À vista | Acesso | Destaques |
+| --- | --- | --- | --- | --- |
+| **Aprendiz** | 12x R$ 59,90 | R$ 599,90 | 1 ano | Questões, flashcards, simulados, Coruja IA (30/h) |
+| **Alquimista** · mais escolhido | 12x R$ 79,90 | R$ 799,90 | 1 ano | + Cronogramas guiados, provas de residência, 3x mais IA (90/h) |
+| **Arcano** · melhor custo-benefício | 12x R$ 189,90 | R$ 1.899,90 | 6 anos | Alquimista a faculdade inteira, pagamento único (−60% vs. 6 anos de Alquimista) |
+
+Regras de cobrança (`backend/src/billing`): à vista (Pix ou 1x no cartão) = preço à vista; de 2x a 12x o total é
+12 × parcela anunciada, dividido em n vezes. Os limites do plano são aplicados no backend (cronogramas e cota da IA).
+**A cobrança ainda é simulada**: o checkout aprova na hora e não coleta dados de cartão. Para produção, integre um
+gateway (Pagar.me, Mercado Pago, Stripe) em `BillingService.checkout`.
+
+## Identidade visual
+
+"Medicina mágica, minimalista": meia-noite (`#0E1030`), pergaminho (`#FAF7F0`) e ouro antigo (`#B8904F`), com
+Cormorant Garamond nos títulos e Inter no texto (fontes embutidas no bundle via `@fontsource`). Ícones de traço
+fino, céu estrelado discreto e modo escuro automático. Tokens em `frontend/src/styles.css`.
 
 ## Arquitetura
 
@@ -64,6 +84,9 @@ docker compose exec pgpool bash -c 'PGPASSWORD=adminpass psql -h localhost -U po
 docker compose stop pg-0        # pg-1 ou pg-2 vira primário em ~30s; a API segue escrevendo
 docker compose start pg-0       # pg-0 volta como standby e sincroniza
 ```
+
+Se **todos** os nós caírem ao mesmo tempo (ex.: reinício do Docker), os nós voltam sozinhos, mas o Pgpool pode
+manter os nós marcados como `down`; nesse caso rode `docker compose restart pgpool`.
 
 ## Endpoints principais
 

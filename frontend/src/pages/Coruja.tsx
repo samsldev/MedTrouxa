@@ -24,13 +24,13 @@ export default function Coruja() {
       const { reply } = await api<{ reply: string }>('/ai/chat', { body: { messages: next.slice(-20) } });
       setMsgs([...next, { role: 'assistant', content: reply }]);
     } catch (e) {
-      setMsgs([...next, { role: 'assistant', content: `⚠️ ${(e as Error).message}` }]);
+      setMsgs([...next, { role: 'assistant', content: `${(e as Error).message}` }]);
     } finally { setBusy(false); }
   }
 
   return (
     <div className="chat">
-      <h1>🦉 Coruja — sua tutora de medicina</h1>
+      <div className="page-head"><span className="kicker">Coruja IA</span><h1>Sua tutora de <em>medicina</em></h1></div>
       <div className="chat-log card">
         {msgs.length === 0 && (
           <div className="center">

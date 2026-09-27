@@ -134,4 +134,19 @@ export class PlanEnrollment {
   @CreateDateColumn() startedAt: Date;
 }
 
-export const ENTITIES = [User, Subject, Topic, Question, Answer, Deck, Flashcard, CardReview, Exam, StudyPlan, PlanEnrollment];
+
+/** Assinatura. `status` fica `active` após confirmação do pagamento (gateway em modo simulado por enquanto). */
+@Entity('subscriptions')
+export class Subscription {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Index() @Column() userId: string;
+  @Column() planId: string;
+  @Column() paymentMethod: 'pix' | 'card';
+  @Column({ type: 'int' }) installments: number;
+  /** Total cobrado, em centavos */
+  @Column({ type: 'int' }) amount: number;
+  @Column({ default: 'active' }) status: 'pending' | 'active' | 'canceled';
+  @CreateDateColumn() startsAt: Date;
+  @Column({ type: 'timestamptz' }) expiresAt: Date;
+}
+export const ENTITIES = [User, Subject, Topic, Question, Answer, Deck, Flashcard, CardReview, Exam, StudyPlan, PlanEnrollment, Subscription];
