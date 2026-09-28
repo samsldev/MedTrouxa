@@ -85,6 +85,7 @@ export default function App() {
       <Route index element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/planos-e-precos" element={<PricingPage />} />
+      <Route path="/v/clara" element={<Landing variante="clara" />} />
       <Route path="/esqueci-senha" element={<ForgotPassword />} />
       <Route path="/redefinir-senha" element={<ResetPassword />} />
       <Route path="/termos" element={<Legal doc="termos" />} />

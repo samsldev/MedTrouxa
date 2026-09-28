@@ -1183,3 +1183,40 @@ button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
 .mega-item b { display: block; font-size: .93rem; font-weight: 600; }
 .mega-item small { display: block; font-size: .8rem; color: var(--muted); margin-top: .1rem; }
 @media (max-width: 980px) { .mega-panel { grid-template-columns: 1fr 1fr; } .mega-col:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--border); } }
+
+/* ---------- Landing, variante clara (/v/clara) — pergaminho em vez de meia-noite ---------- */
+.landing.v-clara {
+  --bg: #faf7f0; --surface: #ffffff; --surface-2: #f4efe4; --text: #15162c; --muted: #6c6a7c; --border: #e8e1d2; --border-strong: #d8cfbb;
+  --gold: #b8904f; --gold-text: #8f6c33; --gold-soft: #f5eddd; --arcane: #5b4fc4; --ok: #1f7a4d; --ok-bg: #eaf5ee; --ko: #b4372f; --ko-bg: #fbedeb;
+  --mark-bg: #0e1030; --gold-text-base: #8f6c33; --btn-dark: #0e1030; --btn-dark-text: #f6f1e6;
+  --foil-text: linear-gradient(100deg, #8f6c33 0%, #c79c52 45%, #a57e3c 75%, #d2ad63 100%);
+  background: var(--bg); color: var(--text); color-scheme: light;
+}
+.v-clara .lp-nav { color: var(--text); --gold-text: #8f6c33; }
+.v-clara .lp-nav.scrolled { background: color-mix(in srgb, #faf7f0 82%, transparent); }
+.v-clara .lp-nav:not(.scrolled) .btn-text:hover { background: rgba(14, 16, 48, .06); }
+.v-clara .hero {
+  background: radial-gradient(120% 80% at 50% 0%, #fffdf8 0%, #f6efe1 55%, #efe5d1 100%); color: var(--text);
+  --text: #15162c; --muted: #6c6a7c; --gold: #b8904f; --gold-text: #8f6c33; --arcane: #5b4fc4;
+}
+.v-clara .aurora { opacity: .55; background:
+  radial-gradient(38% 42% at 22% 28%, rgba(169, 158, 255, .35), transparent 70%),
+  radial-gradient(34% 38% at 80% 22%, rgba(212, 176, 108, .45), transparent 70%),
+  radial-gradient(50% 50% at 50% 60%, rgba(245, 237, 221, .9), transparent 75%); }
+.v-clara .hero-grid { background-image: linear-gradient(rgba(14, 16, 48, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(14, 16, 48, .05) 1px, transparent 1px); }
+.v-clara .grain { opacity: .05; mix-blend-mode: multiply; }
+.v-clara .hero .stars { opacity: .55; }
+.v-clara .eyebrow { background: rgba(255, 255, 255, .7); border-color: rgba(184, 144, 79, .35); color: #5c4a2a; box-shadow: 0 1px 2px rgba(14, 16, 48, .05); }
+.v-clara .eyebrow svg { color: #b8904f; }
+.v-clara .hero h1 { color: #15162c; }
+.v-clara .hero-fine { color: #8a8698; }
+.v-clara .hero .btn-text, .v-clara .hero .btn-ghost { color: var(--text); }
+.v-clara .tabs { background: rgba(255, 255, 255, .7); border-color: var(--border); }
+.v-clara .tabs button { color: #6c6a7c; }
+.v-clara .tabs button:hover { color: #15162c; }
+.v-clara .tabs button.on { background: #fff; border-color: rgba(184, 144, 79, .45); color: #15162c; box-shadow: 0 2px 8px -2px rgba(14, 16, 48, .12); }
+.v-clara .tabs button.on svg { color: #b8904f; }
+.v-clara .showcase::before { background: radial-gradient(50% 50% at 50% 50%, rgba(212, 176, 108, .35), transparent 70%); }
+.v-clara .window { box-shadow: 0 0 0 1px rgba(14, 16, 48, .08), 0 0 0 7px rgba(14, 16, 48, .03), 0 50px 110px -40px rgba(14, 16, 48, .35); }
+.v-clara .hero .btn-glass { background: rgba(255, 255, 255, .75); border-color: var(--border-strong); color: var(--text); box-shadow: 0 1px 2px rgba(14, 16, 48, .06); }
+.v-clara .hero .btn-glass:hover { background: #fff; }

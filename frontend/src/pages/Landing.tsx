@@ -90,7 +90,8 @@ function Ornament() {
   return <div className="ornament" aria-hidden="true"><span /><Icon name="spark" size={12} /><span /></div>;
 }
 
-export default function Landing() {
+/** `variante="clara"`: versão alternativa em pergaminho (tema claro forçado), servida em /v/clara para comparação. */
+export default function Landing({ variante }: { variante?: 'clara' } = {}) {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('questoes');
   const current = TABS.find((t) => t.id === tab)!;
   const { stats, items } = useSocial();
@@ -102,7 +103,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="landing">
+    <div className={`landing ${variante ? `v-${variante}` : ''}`}>
       <SiteNav />
 
       <section className="hero">
