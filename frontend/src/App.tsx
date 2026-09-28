@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Icon, Logo } from './components/Brand';
 import ConsentBanner from './components/ConsentBanner';
-import { inPreview, usePageTracking } from './lib/analytics';
+import { inPreview, setPageTag, usePageTracking } from './lib/analytics';
+import { homeVariant } from './lib/abHome';
 import Account from './pages/Account';
 import Admin from './pages/Admin';
 import Checkout from './pages/Checkout';
@@ -72,8 +74,11 @@ function AdminRoute() {
 
 function Home() {
   const { user, loading } = useAuth();
+  // Sorteio A/B da landing (fixo por navegador); ver lib/abHome.ts
+  const [variant] = useState(homeVariant);
+  useEffect(() => setPageTag('/', `home-${variant}`, '/'), [variant]);
   if (loading) return null;
-  return user && !inPreview() ? <Navigate to="/inicio" replace /> : <Landing />;
+  return user && !inPreview() ? <Navigate to="/inicio" replace /> : <Landing variante={variant === 'clara' ? 'clara' : undefined} />;
 }
 
 export default function App() {
@@ -85,7 +90,7 @@ export default function App() {
       <Route index element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/planos-e-precos" element={<PricingPage />} />
-      <Route path="/v/clara" element={<Landing variante="clara" />} />
+      <Route path="/v/clara" element={<Navigate to="/?v=clara" replace />} />
       <Route path="/esqueci-senha" element={<ForgotPassword />} />
       <Route path="/redefinir-senha" element={<ResetPassword />} />
       <Route path="/termos" element={<Legal doc="termos" />} />
