@@ -1,6 +1,7 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, MouseEvent, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { Icon } from '../components/Brand';
 
 interface Deck { id: number; name: string; description?: string; ownerId: string | null; cardCount: number; due: number; topic?: { name: string } }
 
@@ -17,6 +18,13 @@ export default function Flashcards() {
     setName(''); load();
   }
 
+  async function remove(e: MouseEvent, d: Deck) {
+    e.preventDefault(); e.stopPropagation();
+    if (!confirm(`Apagar o baralho "${d.name}" e seus ${d.cardCount} cards? Esta ação não pode ser desfeita.`)) return;
+    try { await api(`/flashcards/decks/${d.id}`, { method: 'DELETE' }); setDecks((l) => l.filter((x) => x.id !== d.id)); }
+    catch (err) { alert((err as Error).message); }
+  }
+
   return (
     <>
       <div className="page-head"><span className="kicker">Memória</span><h1>Flashcards</h1></div>
@@ -28,7 +36,14 @@ export default function Flashcards() {
       <div className="deck-grid">
         {decks.map((d) => (
           <Link key={d.id} to={`/flashcards/${d.id}`} className="card deck">
-            <h3>{d.name}</h3>
+            <div className="deck-head">
+              <h3>{d.name}</h3>
+              {d.ownerId && (
+                <button type="button" className="icon-btn danger" title="Apagar baralho" aria-label={`Apagar baralho ${d.name}`} onClick={(e) => remove(e, d)}>
+                  <Icon name="trash" size={16} />
+                </button>
+              )}
+            </div>
             <small className="muted">{d.topic?.name ?? (d.ownerId ? 'Meu baralho' : 'Geral')}</small>
             <div className="deck-foot">
               <span>{d.cardCount} cards</span>

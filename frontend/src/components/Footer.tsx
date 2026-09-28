@@ -18,7 +18,7 @@ export default function Footer() {
   const wa = SITE.whatsapp ? `https://wa.me/${SITE.whatsapp}` : '';
   const cols: [string, [string, string][]][] = [
     ['Plataforma', [['Questões', '/questoes'], ['Flashcards', '/flashcards'], ['Simulados', '/simulados'], ['Cronogramas', '/cronogramas'], ['Coruja IA', '/coruja']]],
-    ['Recursos', [['Planos', '/#planos'], ['Método', '/#metodo'], ['Dúvidas frequentes', '/#faq']]],
+    ['Recursos', [['Planos', '/planos-e-precos'], ['Método', '/#metodo'], ['Dúvidas frequentes', '/#faq']]],
     ['Empresa', [
       ...(SITE.email ? [['Contato', `mailto:${SITE.email}`] as [string, string]] : []),
       ...(wa ? [['Falar com suporte', wa] as [string, string]] : []),

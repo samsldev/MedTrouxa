@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, Logo, Stars } from '../components/Brand';
 import Footer from '../components/Footer';
 import Pricing from '../components/Pricing';
 import { Approvals, StatsStrip, Testimonials, useSocial } from '../components/SocialProof';
-import { spotlight, useReveal, useScrolled } from '../hooks';
+import { spotlight, useReveal } from '../hooks';
+import SiteNav from '../components/SiteNav';
 
 const TABS = [
   { id: 'questoes', icon: 'questions', label: 'Questões', title: 'Questões comentadas', text: 'Monte listas do seu jeito: área, tema, banca, ano, dificuldade — ou só as que você errou.' },
@@ -92,27 +93,17 @@ function Ornament() {
 export default function Landing() {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('questoes');
   const current = TABS.find((t) => t.id === tab)!;
-  const scrolled = useScrolled();
   const { stats, items } = useSocial();
   useReveal([stats, items]);
+  // Vindo de outra página por /#secao: rola até a seção depois que a landing montou
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (id) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
+  }, []);
 
   return (
     <div className="landing">
-      <header className={`lp-nav ${scrolled ? 'scrolled' : ''}`}>
-        <div className="lp-wrap lp-nav-in">
-          <Link to="/" aria-label="MedTrouxa, início"><Logo /></Link>
-          <nav>
-            <a href="#recursos">Recursos</a>
-            <a href="#metodo">Método</a>
-            <a href="#planos">Planos</a>
-            <a href="#faq">Dúvidas</a>
-          </nav>
-          <div className="lp-nav-cta">
-            <Link to="/login" className="btn btn-text">Entrar</Link>
-            <Link to="/login?mode=register" className="btn btn-foil">Começar</Link>
-          </div>
-        </div>
-      </header>
+      <SiteNav />
 
       <section className="hero">
         <div className="aurora" aria-hidden="true" />
@@ -269,6 +260,7 @@ export default function Landing() {
             <p className="lede">Assinaturas anuais em até 12x no cartão, ou à vista no Pix.</p>
           </div>
           <Pricing ctaHref={(id) => `/checkout/${id}`} />
+          <p className="center compare-link"><Link to="/planos-e-precos" className="link">Compare todos os recursos dos planos <Icon name="arrow" size={14} /></Link></p>
           <Ornament />
           <ul className="guarantees">
             <li><Icon name="shield" size={16} /> Pagamento seguro</li>

@@ -1,5 +1,5 @@
 import {
-  Body, Controller, ForbiddenException, Get, Injectable, Module, NotFoundException, Param, ParseIntPipe, Post,
+  Body, Controller, Delete, ForbiddenException, Get, HttpCode, Injectable, Module, NotFoundException, Param, ParseIntPipe, Post,
 } from '@nestjs/common';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
@@ -83,6 +83,28 @@ export class FlashcardsService {
     if ((await this.cards.countBy({ deckId })) >= 5000) throw new ForbiddenException('Limite de 5.000 cards por baralho');
     return this.cards.save(this.cards.create({ ...dto, deckId }));
   }
+
+  /** Apaga um baralho próprio com seus cards e o histórico de revisão (card_reviews não tem FK). */
+  async deleteDeck(userId: string, deckId: number) {
+    await this.deckFor(userId, deckId, true);
+    await this.decks.manager.transaction(async (m) => {
+      await m.query(`DELETE FROM card_reviews WHERE "cardId" IN (SELECT id FROM flashcards WHERE "deckId" = $1)`, [deckId]);
+      await m.delete(Flashcard, { deckId });
+      await m.delete(Deck, { id: deckId });
+    });
+    await this.redis.invalidate(`stats:${userId}`);
+  }
+
+  async deleteCard(userId: string, cardId: number) {
+    const card = await this.cards.findOneBy({ id: cardId });
+    if (!card) throw new NotFoundException();
+    await this.deckFor(userId, card.deckId, true);
+    await this.cards.manager.transaction(async (m) => {
+      await m.delete(CardReview, { cardId });
+      await m.delete(Flashcard, { id: cardId });
+    });
+    await this.redis.invalidate(`stats:${userId}`);
+  }
 }
 
 @Controller('flashcards')
@@ -94,6 +116,12 @@ class FlashcardsController {
   @Get('decks/:id/due') due(@CurrentUser() u: JwtUser, @Param('id', ParseIntPipe) id: number) { return this.svc.due(u.sub, id); }
   @Post('decks/:id/cards') add(@CurrentUser() u: JwtUser, @Param('id', ParseIntPipe) id: number, @Body() dto: CardDto) {
     return this.svc.addCard(u.sub, id, dto);
+  }
+  @Delete('decks/:id') @HttpCode(204) removeDeck(@CurrentUser() u: JwtUser, @Param('id', ParseIntPipe) id: number) {
+    return this.svc.deleteDeck(u.sub, id);
+  }
+  @Delete('cards/:id') @HttpCode(204) removeCard(@CurrentUser() u: JwtUser, @Param('id', ParseIntPipe) id: number) {
+    return this.svc.deleteCard(u.sub, id);
   }
   @Post('cards/:id/review') review(@CurrentUser() u: JwtUser, @Param('id', ParseIntPipe) id: number, @Body() dto: ReviewDto) {
     return this.svc.review(u.sub, id, dto.grade);

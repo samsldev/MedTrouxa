@@ -18,6 +18,7 @@ import Landing from './pages/Landing';
 import Legal, { DeleteAccountInfo } from './pages/Legal';
 import Login from './pages/Login';
 import Plans from './pages/Plans';
+import PricingPage from './pages/PricingPage';
 import Questions from './pages/Questions';
 import Ranking from './pages/Ranking';
 import Subscription from './pages/Subscription';
@@ -83,6 +84,7 @@ export default function App() {
     <Routes>
       <Route index element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/planos-e-precos" element={<PricingPage />} />
       <Route path="/esqueci-senha" element={<ForgotPassword />} />
       <Route path="/redefinir-senha" element={<ResetPassword />} />
       <Route path="/termos" element={<Legal doc="termos" />} />

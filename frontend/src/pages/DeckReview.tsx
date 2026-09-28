@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, isPlanError } from '../api/client';
 import Upsell from '../components/Upsell';
+import { Icon } from '../components/Brand';
 
 interface Card { id: number; front: string; back: string }
 interface Deck { id: number; name: string; ownerId: string | null; cards: Card[] }
@@ -10,6 +11,7 @@ const GRADES = [[0, 'Errei', 'bad'], [3, 'Difícil', 'mid'], [4, 'Bom', 'good'],
 
 export default function DeckReview() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [deck, setDeck] = useState<Deck | null>(null);
   const [queue, setQueue] = useState<Card[]>([]);
   const [flipped, setFlipped] = useState(false);
@@ -38,6 +40,22 @@ export default function DeckReview() {
     setForm({ front: '', back: '' }); load();
   }
 
+  async function removeCard(c: Card) {
+    if (!confirm('Apagar este card? O histórico de revisão dele também será apagado.')) return;
+    try {
+      await api(`/flashcards/cards/${c.id}`, { method: 'DELETE' });
+      setDeck((d) => d && { ...d, cards: d.cards.filter((x) => x.id !== c.id) });
+      setQueue((q) => q.filter((x) => x.id !== c.id));
+      if (queue[0]?.id === c.id) setFlipped(false);
+    } catch (e) { alert((e as Error).message); }
+  }
+
+  async function removeDeck() {
+    if (!deck || !confirm(`Apagar o baralho "${deck.name}" e seus ${deck.cards.length} cards? Esta ação não pode ser desfeita.`)) return;
+    try { await api(`/flashcards/decks/${deck.id}`, { method: 'DELETE' }); navigate('/flashcards'); }
+    catch (e) { alert((e as Error).message); }
+  }
+
   async function generate() {
     setAiMsg('Gerando...');
     try {
@@ -54,7 +72,10 @@ export default function DeckReview() {
   return (
     <>
       <Link to="/flashcards" className="link">← Baralhos</Link>
-      <h1 className="mt">{deck.name}</h1>
+      <div className="deck-title mt">
+        <h1>{deck.name}</h1>
+        {mine && <button type="button" className="btn btn-danger" onClick={removeDeck}><Icon name="trash" size={16} /> Apagar baralho</button>}
+      </div>
       <p className="muted">{deck.cards.length} cards · {reviewed} revisados nesta sessão</p>
 
       {card ? (
@@ -86,6 +107,22 @@ export default function DeckReview() {
             {aiMsg && (aiMsg.startsWith('PLAN:') ? <Upsell message={aiMsg.slice(5)} compact /> : <p className="muted">{aiMsg}</p>)}
           </div>
         </div>
+      )}
+
+      {mine && deck.cards.length > 0 && (
+        <section className="card card-list">
+          <h3>Cards do baralho</h3>
+          <ul>
+            {deck.cards.map((c) => (
+              <li key={c.id}>
+                <div><strong>{c.front}</strong><span className="muted">{c.back}</span></div>
+                <button type="button" className="icon-btn danger" title="Apagar card" aria-label="Apagar card" onClick={() => removeCard(c)}>
+                  <Icon name="trash" size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </>
   );

@@ -218,6 +218,15 @@ div.center { padding: 2rem; }
 .deck { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: .4rem; transition: border-color .15s, transform .15s; margin: 0; }
 a.deck:hover { border-color: var(--gold); transform: translateY(-2px); }
 .deck h3 { margin: .15rem 0 0; }
+.deck-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+.deck-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.deck-title h1 { margin: 0; }
+.icon-btn.danger { color: var(--ko); }
+.card-list ul { list-style: none; margin: 0; padding: 0; }
+.card-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--border); }
+.card-list li > div { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.card-list li strong, .card-list li span { overflow-wrap: anywhere; }
+.card-list li span { font-size: .9rem; }
 .deck p { margin: 0 0 .75rem; font-size: .9rem; }
 .deck .pill { align-self: flex-start; }
 .deck-foot { display: flex; justify-content: space-between; margin-top: auto; padding-top: .75rem; font-size: .84rem; color: var(--muted); border-top: 1px solid var(--border); }
@@ -1115,3 +1124,36 @@ button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
 .c-chip.off { background: var(--surface-2); color: var(--muted); }
 .c-plans { border: 0; padding: 0; margin: 0; }
 .c-plans .check { font-size: .85rem; color: var(--text); }
+
+/* ---------- Página de planos (/planos-e-precos) ---------- */
+.lp-nav nav a.active { color: var(--gold-text); }
+.compare-link { margin-top: 1.5rem; }
+.compare-link .link { display: inline-flex; align-items: center; gap: .35rem; }
+.pp-hero { position: relative; overflow: hidden; padding: 9rem 0 2rem; }
+.pp-hero h1 { font-size: clamp(2.3rem, 5vw, 3.6rem); margin: .6rem auto .8rem; max-width: 16ch; line-height: 1.08; }
+.pp-hero .lede { margin: 0 auto; }
+.pp-free { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .45rem; margin-top: 1.4rem; padding: .55rem 1rem; border: 1px solid var(--border); border-radius: 999px; font-size: .9rem; color: var(--muted); }
+.pp-cards { padding-top: 2rem; }
+.cmp { max-width: 1040px; margin: 0 auto; }
+.cmp-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+.cmp table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: .92rem; }
+.cmp th, .cmp td { padding: .85rem 1rem; border-top: 1px solid var(--border); text-align: center; vertical-align: middle; }
+.cmp thead th { border-top: 0; vertical-align: top; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.cmp thead th > * { display: block; margin: 0 auto .35rem; }
+.cmp thead .badge { display: inline-block; }
+.cmp-name { font-family: var(--serif, "Cormorant Garamond", serif); font-size: 1.35rem; font-weight: 700; }
+.cmp-price { color: var(--muted); font-size: .85rem; }
+.cmp .btn-sm { display: inline-flex; padding: .4rem 1rem; font-size: .85rem; margin-top: .3rem; }
+.cmp tbody th { text-align: left; font-weight: 500; width: 40%; }
+.cmp tbody th small, .cmp td small { display: block; color: var(--muted); font-weight: 400; font-size: .78rem; margin-top: .15rem; }
+.cmp .hl { background: color-mix(in srgb, var(--gold) 6%, transparent); }
+.cmp-group th { text-align: left; background: var(--surface-2); color: var(--gold-text); font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.cmp-group th svg { vertical-align: -3px; margin-right: .3rem; }
+.cmp-total td strong { font-size: 1.1rem; }
+.cmp-yes { color: var(--ok); }
+.cmp-no { color: var(--muted); opacity: .6; }
+.cmp-txt { font-weight: 600; font-size: .86rem; }
+.cmp-note { display: flex; gap: .5rem; align-items: baseline; justify-content: center; flex-wrap: wrap; text-align: center; color: var(--muted); margin-top: 1.2rem; }
+.cmp-note b { color: var(--gold-text); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (max-width: 640px) { .pp-hero { padding-top: 7rem; } .cmp tbody th { width: auto; min-width: 200px; } }
