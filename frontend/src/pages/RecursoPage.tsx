@@ -47,14 +47,14 @@ export default function RecursoPage() {
           </div>
           <p className="rp-planos"><Icon name="check" size={14} /> {c.planos}</p>
         </div>
-        <div className="lp-wrap rp-demo">
+      </section>
+      <div className="lp-wrap rp-demo">
           <span className="rp-demo-tag" aria-hidden="true">Demonstração ↓</span>
           <div className="window">
             <div className="window-bar"><i /><i /><i /><span>medtrouxa.com.br/{c.janela}</span></div>
             {c.demo}
           </div>
         </div>
-      </section>
 
       <StatsStrip stats={stats} />
 

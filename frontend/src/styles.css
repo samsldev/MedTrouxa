@@ -1226,7 +1226,7 @@ button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
 .v-clara .areas i { color: #b8904f; }
 
 /* ---------- Páginas de recurso (/recursos/:slug) ---------- */
-.rp-hero { padding-top: 9rem; }
+.rp-hero { padding: 9rem 0 15rem; }
 .rp-hero h1 { font-size: clamp(2.6rem, 5.6vw, 4.6rem); margin: 1.4rem 0 .4rem; max-width: 14ch; text-align: left; }
 .rp-hero .lede { color: #b9b6cf; max-width: 600px; }
 .rp-hero .hero-cta.left { justify-content: flex-start; margin: 2.2rem 0 1rem; }
@@ -1237,9 +1237,9 @@ button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
 .tom-coruja .rp-badge-i { background: linear-gradient(135deg, #a6f0c6, #4fbf86); }
 .rp-planos { display: inline-flex; align-items: center; gap: .45rem; font-size: .88rem; color: #a8a6bf; margin: 0; }
 .rp-planos svg { color: #e3c585; }
-.rp-demo { position: relative; margin-top: 4.5rem; padding-bottom: 0; }
-.rp-demo .window { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: -1px; box-shadow: 0 -30px 80px -30px rgba(105, 90, 230, .45), 0 0 0 1px rgba(255,255,255,.06); }
-.rp-demo-tag { position: absolute; right: 2.4rem; top: -2rem; font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: #e3c585; transform: rotate(-3deg); }
+.rp-demo { position: relative; z-index: 2; margin-top: -11rem; margin-bottom: 5rem; }
+.rp-demo .window { box-shadow: 0 -30px 80px -30px rgba(105, 90, 230, .45), 0 40px 80px -40px rgba(14,16,48,.45), 0 0 0 1px rgba(255,255,255,.06); }
+.rp-demo-tag { position: absolute; right: 2.4rem; top: -2rem; z-index: 1; font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: #e3c585; transform: rotate(-3deg); }
 .rp-tight { min-height: 0; }
 .rp-tight > .rp-card { box-shadow: none; border: 0; padding: 0; background: none; }
 
@@ -1291,7 +1291,8 @@ button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
 .rp-outro small { color: var(--muted); }
 
 @media (max-width: 860px) {
-  .rp-hero { padding-top: 7rem; }
+  .rp-hero { padding: 7rem 0 12rem; }
+  .rp-demo { margin-top: -9rem; margin-bottom: 3rem; }
   .rp-bloco-in { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 4rem; padding-bottom: 4rem; border: 0; }
   .rp-bloco.rev .rp-copy { order: 0; }
   .rp-outros-grid { grid-template-columns: 1fr 1fr; }
