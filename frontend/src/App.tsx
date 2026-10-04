@@ -21,6 +21,7 @@ import Legal, { DeleteAccountInfo } from './pages/Legal';
 import Login from './pages/Login';
 import Plans from './pages/Plans';
 import PricingPage from './pages/PricingPage';
+import RecursoPage from './pages/RecursoPage';
 import Questions from './pages/Questions';
 import Ranking from './pages/Ranking';
 import Subscription from './pages/Subscription';
@@ -90,6 +91,7 @@ export default function App() {
       <Route index element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/planos-e-precos" element={<PricingPage />} />
+      <Route path="/recursos/:slug" element={<RecursoPage />} />
       <Route path="/v/clara" element={<Navigate to="/?v=clara" replace />} />
       <Route path="/esqueci-senha" element={<ForgotPassword />} />
       <Route path="/redefinir-senha" element={<ResetPassword />} />

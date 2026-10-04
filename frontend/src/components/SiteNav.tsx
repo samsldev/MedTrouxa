@@ -55,10 +55,10 @@ function RecursosMenu() {
           <div key={g.id} className="mega-col">
             <h4 className={`mega-head ${g.tom}`}><span><Icon name={g.icon} size={14} /></span>{g.nome}</h4>
             {g.itens.map((r) => (
-              <a key={r.slug} href={hrefRecurso(r)} className="mega-item" onClick={() => setOpen(false)}>
+              <Link key={r.slug} to={hrefRecurso(r)} className="mega-item" onClick={() => setOpen(false)}>
                 <span className="mega-ico"><Icon name={r.icon} size={18} /></span>
                 <span><b>{r.titulo}</b><small>{r.descricao}</small></span>
-              </a>
+              </Link>
             ))}
           </div>
         ))}
